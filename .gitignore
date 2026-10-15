@@ -1,0 +1,52 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# temporary scratch data
+all_csv_images.json
+all_image_urls.json
+clean_images.json
+csv_images_list.json
+missing_images.json
+scratch_home.html
+/images/
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# ide / local agent
+.gemini/
+.idea/
+.vscode/
+*.swp
