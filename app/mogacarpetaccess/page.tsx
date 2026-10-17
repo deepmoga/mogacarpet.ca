@@ -40,7 +40,10 @@ import {
   CheckCircle2,
   MessageSquare,
   User,
-  Ruler
+  Ruler,
+  Upload,
+  Globe,
+  Palette
 } from 'lucide-react';
 import { CATEGORIES, getFlattenedCategories } from '@/data/categories';
 
@@ -144,6 +147,9 @@ export default function AdminPage() {
   // Settings Data
   const [settings, setSettings] = useState<any>({
     site_title: 'Moga Carpet & Flooring',
+    header_logo_url: '/images/moga-carpet-logo.png',
+    footer_logo_url: '/images/moga-carpet-logo.png',
+    favicon_url: '/images/favicon.png',
     contact_phone: '1-905-848-2222',
     contact_address: '1-8550 Torbram Road, Brampton, ON, Canada (Second Floor)',
     business_hours: 'Monday to Saturday 11:00 AM – 5:00 PM (Preferred By Appointment)',
@@ -166,6 +172,44 @@ export default function AdminPage() {
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [testEmailLoading, setTestEmailLoading] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState<{ success?: boolean; message?: string } | null>(null);
+  const [uploadingHeaderLogo, setUploadingHeaderLogo] = useState(false);
+  const [uploadingFooterLogo, setUploadingFooterLogo] = useState(false);
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
+
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: 'header_logo_url' | 'footer_logo_url' | 'favicon_url',
+    setLoading: (val: boolean) => void
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size exceeds 5MB limit.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setSettings((prev: any) => ({ ...prev, [field]: data.url }));
+      } else {
+        alert(data.error || 'Failed to upload image.');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error uploading file.');
+    } finally {
+      setLoading(false);
+      e.target.value = '';
+    }
+  };
 
   // Check auth status & URL tab
   useEffect(() => {
@@ -490,12 +534,11 @@ export default function AdminPage() {
       {/* ========================================================= */}
       <header className="bg-white border-b border-stone-200 px-6 py-3.5 flex flex-col sm:flex-row justify-between items-center gap-4 sticky top-0 z-40 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="relative h-10 w-44">
-            <Image
-              src="/images/cropped-web-logo-moga-carpet-flooring-5.png"
+          <div className="relative h-10 flex items-center">
+            <img
+              src={settings.header_logo_url || '/images/cropped-web-logo-moga-carpet-flooring-5.png'}
               alt="Moga Carpet Admin"
-              fill
-              className="object-contain object-left"
+              className="h-9 w-auto object-contain object-left"
             />
           </div>
           <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
@@ -566,8 +609,8 @@ export default function AdminPage() {
           })}
 
           <div className="pt-6 border-t border-stone-100 mt-6 text-[11px] text-stone-500 px-3">
-            <p className="font-bold text-stone-800">Moga Carpet & Flooring</p>
-            <p>1-8550 Torbram Rd, Brampton</p>
+            <p className="font-bold text-stone-800">{settings.site_title || 'Moga Carpet & Flooring'}</p>
+            <p>{settings.contact_address || '1-8550 Torbram Rd, Brampton'}</p>
             <p className="text-[#1212ff] font-bold mt-1">Light Professional Theme</p>
           </div>
         </aside>
@@ -1280,7 +1323,195 @@ export default function AdminPage() {
 
               <form onSubmit={handleSaveSettings} className="space-y-6">
                 
-                {/* 1. GOOGLE SMTP CONFIGURATION CARD */}
+                {/* 1. WEBSITE BRANDING & LOGOS */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm space-y-6">
+                  <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                        <Palette className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-stone-900">Website Branding & Logo Settings</h3>
+                        <p className="text-xs text-stone-500">Update header navigation logo, dark footer logo, and site browser favicon</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-blue-50 text-[#1212ff] border border-blue-200 font-bold">
+                      Dynamic Branding
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Header Logo */}
+                    <div className="bg-stone-50/70 p-5 rounded-2xl border border-stone-200 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">Header Navigation Logo</h4>
+                          <p className="text-[11px] text-stone-500 mt-0.5">Used on desktop navbar & mobile menu</p>
+                        </div>
+                        <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shadow-sm">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>{uploadingHeaderLogo ? 'Uploading...' : 'Upload Logo'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={uploadingHeaderLogo}
+                            onChange={(e) => handleFileUpload(e, 'header_logo_url', setUploadingHeaderLogo)}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+
+                      {/* Header Logo Preview Box */}
+                      <div className="h-20 rounded-xl bg-white border border-stone-200 flex items-center justify-center p-3 relative overflow-hidden shadow-inner">
+                        {settings.header_logo_url ? (
+                          <img
+                            src={settings.header_logo_url}
+                            alt="Header Logo Preview"
+                            className="max-h-14 max-w-full object-contain"
+                          />
+                        ) : (
+                          <span className="text-xs text-stone-400 font-medium">No logo configured</span>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-stone-700 mb-1">
+                          Logo Image URL / Path
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.header_logo_url || ''}
+                          onChange={(e) => setSettings({ ...settings, header_logo_url: e.target.value })}
+                          placeholder="/images/moga-carpet-logo.png or https://..."
+                          className="w-full bg-white border border-stone-300 rounded-xl px-3 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#1212ff]"
+                        />
+                        <span className="text-[10px] text-stone-400 mt-1 block">
+                          Recommended: Transparent PNG or SVG (~320×90px)
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Footer Logo */}
+                    <div className="bg-stone-50/70 p-5 rounded-2xl border border-stone-200 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">Footer Logo</h4>
+                          <p className="text-[11px] text-stone-500 mt-0.5">Used on dark footer across all pages</p>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setSettings({ ...settings, footer_logo_url: settings.header_logo_url })}
+                            className="text-[11px] font-bold text-[#1212ff] hover:underline px-2 py-1 cursor-pointer"
+                            title="Copy header logo path"
+                          >
+                            Same as Header
+                          </button>
+                          <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shadow-sm">
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>{uploadingFooterLogo ? 'Uploading...' : 'Upload Logo'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              disabled={uploadingFooterLogo}
+                              onChange={(e) => handleFileUpload(e, 'footer_logo_url', setUploadingFooterLogo)}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Footer Logo Preview Box (Dark background matching footer) */}
+                      <div className="h-20 rounded-xl bg-[#0b1026] border border-stone-800 flex items-center justify-center p-3 relative overflow-hidden shadow-inner">
+                        {settings.footer_logo_url ? (
+                          <img
+                            src={settings.footer_logo_url}
+                            alt="Footer Logo Preview"
+                            className="max-h-14 max-w-full object-contain"
+                          />
+                        ) : (
+                          <span className="text-xs text-stone-500 font-medium">No logo configured</span>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-stone-700 mb-1">
+                          Logo Image URL / Path
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.footer_logo_url || ''}
+                          onChange={(e) => setSettings({ ...settings, footer_logo_url: e.target.value })}
+                          placeholder="/images/moga-carpet-logo.png or https://..."
+                          className="w-full bg-white border border-stone-300 rounded-xl px-3 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#1212ff]"
+                        />
+                        <span className="text-[10px] text-stone-400 mt-1 block">
+                          Recommended: Light/White transparent PNG or SVG
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Site Favicon */}
+                  <div className="bg-stone-50/70 p-5 rounded-2xl border border-stone-200">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                      <div>
+                        <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">Site Favicon & Browser Tab Icon</h4>
+                        <p className="text-[11px] text-stone-500 mt-0.5">Displayed in web browser tabs, bookmarks, and mobile home screen icons</p>
+                      </div>
+                      <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shadow-sm">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{uploadingFavicon ? 'Uploading...' : 'Upload Favicon'}</span>
+                        <input
+                          type="file"
+                          accept=".ico,.png,.svg,.webp"
+                          disabled={uploadingFavicon}
+                          onChange={(e) => handleFileUpload(e, 'favicon_url', setUploadingFavicon)}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                      {/* Browser Tab Simulation Preview */}
+                      <div className="bg-stone-200/60 p-3 rounded-xl border border-stone-300/80">
+                        <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider block mb-2">Live Browser Tab Preview</span>
+                        <div className="inline-flex items-center gap-2 bg-white px-3 py-1.5 rounded-t-lg border-t border-l border-r border-stone-300 shadow-sm max-w-full">
+                          {settings.favicon_url ? (
+                            <img
+                              src={settings.favicon_url}
+                              alt="Favicon Preview"
+                              className="w-4 h-4 object-contain rounded-sm shrink-0"
+                            />
+                          ) : (
+                            <Globe className="w-4 h-4 text-stone-400 shrink-0" />
+                          )}
+                          <span className="text-xs font-semibold text-stone-800 truncate max-w-[220px]">
+                            {settings.site_title || 'Moga Carpet & Flooring Brampton'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-stone-700 mb-1">
+                          Favicon URL / Path
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.favicon_url || ''}
+                          onChange={(e) => setSettings({ ...settings, favicon_url: e.target.value })}
+                          placeholder="/images/favicon.png or /favicon.ico"
+                          className="w-full bg-white border border-stone-300 rounded-xl px-3 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#1212ff]"
+                        />
+                        <span className="text-[10px] text-stone-400 mt-1 block">
+                          Accepts .ico, .png, .svg (Recommended: 32×32px or 64×64px)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. GOOGLE SMTP CONFIGURATION CARD */}
                 <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm space-y-6">
                   <div className="flex items-center justify-between border-b border-stone-100 pb-4">
                     <div className="flex items-center gap-3">
@@ -1484,7 +1715,7 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* 3. ADMIN SECURITY & LOGIN CREDENTIALS */}
+                {/* 4. ADMIN SECURITY & LOGIN CREDENTIALS */}
                 <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm space-y-4">
                   <div className="flex items-center gap-3 border-b border-stone-100 pb-3">
                     <div className="w-10 h-10 rounded-2xl bg-red-50 text-[#ff0000] flex items-center justify-center">

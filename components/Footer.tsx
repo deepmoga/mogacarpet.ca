@@ -13,8 +13,10 @@ import {
   Sparkles
 } from 'lucide-react';
 import { CATEGORIES } from '@/data/categories';
+import { useSettings } from '@/context/SettingsContext';
 
 export default function Footer() {
+  const settings = useSettings();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
@@ -83,8 +85,8 @@ export default function Footer() {
             <Link href="/" className="inline-block">
               <div className="relative h-14 w-56">
                 <Image
-                  src="/images/cropped-web-logo-moga-carpet-flooring-5.png"
-                  alt="Moga Carpet & Flooring"
+                  src={settings.footer_logo_url || settings.header_logo_url || settings.logo_url || '/images/cropped-web-logo-moga-carpet-flooring-5.png'}
+                  alt={settings.site_title || "Moga Carpet & Flooring"}
                   fill
                   className="object-contain object-left brightness-110"
                 />
@@ -98,17 +100,17 @@ export default function Footer() {
             <div className="space-y-2.5 text-xs text-stone-300 pt-2">
               <div className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-[#4d4dff] flex-shrink-0 mt-0.5" />
-                <span>1-8550 Torbram Road, Brampton ON, Canada (Second Floor)</span>
+                <span>{settings.contact_address || '1-8550 Torbram Road, Brampton ON, Canada (Second Floor)'}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-[#ff4d4d] flex-shrink-0" />
-                <a href="tel:19058482222" className="hover:text-white font-semibold transition-colors">
-                  1-905-848-2222 (Call or Text)
+                <a href={`tel:${(settings.contact_phone || '19058482222').replace(/[^0-9+]/g, '')}`} className="hover:text-white font-semibold transition-colors">
+                  {settings.contact_phone || '1-905-848-2222'} (Call or Text)
                 </a>
               </div>
               <div className="flex items-center gap-2.5">
                 <Clock className="w-4 h-4 text-[#4d4dff] flex-shrink-0" />
-                <span>Mon - Sat: 11:00 AM – 5:00 PM (Preferred by Appointment)</span>
+                <span>{settings.business_hours || 'Mon - Sat: 11:00 AM – 5:00 PM (Preferred by Appointment)'}</span>
               </div>
             </div>
           </div>
@@ -160,7 +162,7 @@ export default function Footer() {
               <li><a href="/#estimator-section" className="hover:text-white transition-colors">Instant Flooring Estimator</a></li>
               <li><Link href="/contact" className="hover:text-white transition-colors">Book Showroom Appointment</Link></li>
               <li><Link href="/about" className="hover:text-white transition-colors">Certified GTA Installation</Link></li>
-              <li><a href="https://maps.app.goo.gl/8pBrk8d4sy7C9vvG8" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Google Maps Directions ↗</a></li>
+              <li><a href={settings.google_maps_url || "https://maps.app.goo.gl/8pBrk8d4sy7C9vvG8"} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Google Maps Directions ↗</a></li>
             </ul>
 
             <div className="pt-3">
@@ -176,7 +178,7 @@ export default function Footer() {
         {/* Bottom Copyright & Security */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-400">
           <div>
-            © {new Date().getFullYear()} Moga Carpet & Flooring. All rights reserved. Your One Stop Flooring Shop.
+            © {new Date().getFullYear()} {settings.site_title || 'Moga Carpet & Flooring'}. All rights reserved. {settings.tagline || 'Your One Stop Flooring Shop'}.
           </div>
 
           <div className="flex items-center space-x-4 text-stone-400">

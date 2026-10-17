@@ -4,9 +4,11 @@ import React from 'react';
 import Image from 'next/image';
 import { ShieldCheck, Truck, Clock, Sparkles, CheckCircle2, PhoneCall } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useSettings } from '@/context/SettingsContext';
 
 export default function WhyChooseUs() {
   const { setQuoteModalOpen } = useCart();
+  const { settings } = useSettings();
 
   return (
     <section id="about-section" className="py-16 sm:py-24 bg-white overflow-hidden">
@@ -115,11 +117,11 @@ export default function WhyChooseUs() {
               </button>
 
               <a
-                href="tel:19058482222"
+                href={`tel:${(settings.contact_phone || '19058482222').replace(/\D/g, '')}`}
                 className="inline-flex items-center text-xs sm:text-sm font-bold text-stone-900 hover:text-[#1212ff] transition-colors"
               >
                 <PhoneCall className="w-4 h-4 mr-2 text-[#ff0000]" />
-                <span>Call or Text: (905) 848-2222</span>
+                <span>Call or Text: {settings.contact_phone || '(905) 848-2222'}</span>
               </a>
             </div>
 

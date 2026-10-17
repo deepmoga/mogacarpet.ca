@@ -17,6 +17,7 @@ import {
   Filter
 } from 'lucide-react';
 import { CATEGORIES, Category } from '@/data/categories';
+import { useSettings } from '@/context/SettingsContext';
 import ProductInquiryModal from '@/components/ProductInquiryModal';
 import ProductCard from '@/components/ProductCard';
 
@@ -26,6 +27,7 @@ interface ProductsClientProps {
 }
 
 export default function ProductsClient({ initialProducts, initialTotal }: ProductsClientProps) {
+  const { settings } = useSettings();
   const [products, setProducts] = useState<any[]>(initialProducts || []);
   const [total, setTotal] = useState<number>(initialTotal || 0);
   const [page, setPage] = useState<number>(1);
@@ -421,7 +423,7 @@ export default function ProductsClient({ initialProducts, initialTotal }: Produc
                   ✓ All {products.length} matching flooring products loaded
                 </span>
                 <p className="text-[11px] text-stone-400">
-                  Can't find a specific commercial broadloom or custom carpet? Call our Brampton warehouse at (905) 848-2222.
+                  Can't find a specific commercial broadloom or custom carpet? Call our warehouse at <a href={`tel:${(settings.contact_phone || '19058482222').replace(/\D/g, '')}`} className="text-stone-600 hover:text-[#ff0000] font-semibold underline">{settings.contact_phone || '(905) 848-2222'}</a>.
                 </p>
               </div>
             )}

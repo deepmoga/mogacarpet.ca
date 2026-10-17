@@ -3,9 +3,11 @@
 import React, { useState } from 'react';
 import { X, Calculator, CheckCircle2, Phone, ShieldCheck } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useSettings } from '@/context/SettingsContext';
 
 export default function QuoteModal() {
   const { quoteModalOpen, setQuoteModalOpen } = useCart();
+  const { settings } = useSettings();
   const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -68,11 +70,11 @@ export default function QuoteModal() {
             </p>
             <div className="pt-4">
               <a
-                href="tel:19058482222"
+                href={`tel:${(settings.contact_phone || '19058482222').replace(/\D/g, '')}`}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1212ff] text-white font-bold text-xs hover:bg-[#0a0ad8] transition-colors shadow-md"
               >
                 <Phone className="w-4 h-4 text-[#ff4d4d]" />
-                <span>Urgent Question? Call 1-905-848-2222</span>
+                <span>Urgent Question? Call {settings.contact_phone || '1-905-848-2222'}</span>
               </a>
             </div>
           </div>

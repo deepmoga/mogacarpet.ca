@@ -13,6 +13,7 @@ import {
   Check
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useSettings } from '@/context/SettingsContext';
 
 // Exact Pricing Matrix from https://mogacarpet.ca/estimator/
 export const ESTIMATOR_MATRIX: Record<
@@ -127,6 +128,7 @@ const SQFT_PRESETS = [500, 600, 700, 800, 900, 1000, 1500, 2000, 2500, 3000, 350
 
 export default function FlooringEstimator() {
   const { setQuoteModalOpen } = useCart();
+  const { settings } = useSettings();
 
   // Selected values matching the old site fields
   const [sqft, setSqft] = useState<number>(1000);
@@ -424,11 +426,11 @@ export default function FlooringEstimator() {
                 </button>
 
                 <a
-                  href="tel:19058482222"
+                  href={`tel:${(settings.contact_phone || '19058482222').replace(/\D/g, '')}`}
                   className="w-full py-3 px-6 rounded-xl text-xs font-bold text-white border border-[#1212ff] bg-[#1212ff]/20 hover:bg-[#1212ff]/40 transition-all flex items-center justify-center gap-2 text-center"
                 >
                   <PhoneCall className="w-4 h-4 text-[#8585ff]" />
-                  <span>Call / Text: (905) 848-2222</span>
+                  <span>Call / Text: {settings.contact_phone || '(905) 848-2222'}</span>
                 </a>
 
                 <div className="flex items-center justify-center gap-2 text-[11px] text-stone-400 text-center pt-2">

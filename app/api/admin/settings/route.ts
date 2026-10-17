@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 import { verifyToken, hashPassword } from '@/lib/auth';
 import { getAllSettings, saveSettings } from '@/lib/settings';
 
@@ -47,7 +48,20 @@ export async function POST(req: Request) {
       delete updates.admin_password;
     }
 
+    // Keep logo_url in sync with header_logo_url
+    if (updates.header_logo_url) {
+      updates.logo_url = updates.header_logo_url;
+    }
+
     await saveSettings(updates);
+
+    // Revalidate all pages layout cache
+    try {
+      revalidatePath('/', 'layout');
+    } catch (e) {
+      console.warn('Revalidation notice:', e);
+    }
+
     return NextResponse.json({ success: true, message: 'Settings saved successfully' });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });

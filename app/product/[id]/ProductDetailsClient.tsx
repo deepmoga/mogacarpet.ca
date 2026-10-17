@@ -18,6 +18,7 @@ import {
   Send
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useSettings } from '@/context/SettingsContext';
 import ProductInquiryModal from '@/components/ProductInquiryModal';
 
 interface ColorVariant {
@@ -115,6 +116,7 @@ export function cleanAndFormatDescription(raw: string): { label?: string; value:
 
 export default function ProductDetailsClient({ product, relatedProducts }: ProductDetailsClientProps) {
   const { addToCart, wishlist, toggleWishlist, setQuoteModalOpen } = useCart();
+  const { settings } = useSettings();
   
   // Real Color & Image state
   // Only true if product has actual distinct color variations (more than 1 unique color name)
@@ -407,11 +409,11 @@ export default function ProductDetailsClient({ product, relatedProducts }: Produ
                   <strong className="text-xs text-white">Need a custom roll cut or contractor quote?</strong>
                 </div>
                 <a
-                  href="tel:19058482222"
+                  href={`tel:${(settings.contact_phone || '19058482222').replace(/\D/g, '')}`}
                   className="px-4 py-2 rounded-xl bg-[#ff0000] hover:bg-[#cc0000] text-white font-bold text-xs flex items-center gap-1.5 whitespace-nowrap shadow-sm"
                 >
                   <PhoneCall className="w-3.5 h-3.5" />
-                  <span>(905) 848-2222</span>
+                  <span>{settings.contact_phone || '(905) 848-2222'}</span>
                 </a>
               </div>
 

@@ -18,12 +18,15 @@ import {
   Users
 } from 'lucide-react';
 
+import { getAllSettings } from '@/lib/settings';
+
 export const metadata: Metadata = {
   title: 'About Us | Moga Carpet & Flooring Brampton ON',
   description: 'Learn about Moga Carpet & Flooring. Brampton’s premier wholesale and retail destination for broadloom carpets, waterproof vinyl planks, and luxury area rugs.',
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const settings = await getAllSettings();
   return (
     <>
       <Navbar />
@@ -94,7 +97,7 @@ export default function AboutPage() {
               </div>
 
               <p className="text-stone-600 text-sm leading-relaxed">
-                Founded with a vision to eliminate middleman retail markups, <strong>Moga Carpet & Flooring</strong> has grown into one of the largest independent flooring distributors in Ontario. Operating from our expansive facility at <strong>8550 Torbram Road, Brampton</strong>, we warehouse thousands of rolls and pallets ready for immediate GTA dispatch.
+                Founded with a vision to eliminate middleman retail markups, <strong>Moga Carpet & Flooring</strong> has grown into one of the largest independent flooring distributors in Ontario. Operating from our expansive facility at <strong>{settings.contact_address || '8550 Torbram Road, Brampton'}</strong>, we warehouse thousands of rolls and pallets ready for immediate GTA dispatch.
               </p>
 
               <p className="text-stone-600 text-sm leading-relaxed">
@@ -227,15 +230,15 @@ export default function AboutPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
             <div>
               <h3 className="text-2xl font-black tracking-tight">Ready to renovate your floors?</h3>
-              <p className="text-xs sm:text-sm text-stone-400 mt-1">Visit our showroom or call (905) 848-2222 to schedule a free measurement.</p>
+              <p className="text-xs sm:text-sm text-stone-400 mt-1">Visit our showroom or call {settings.contact_phone || '(905) 848-2222'} to schedule a free measurement.</p>
             </div>
             <div className="flex items-center gap-3">
               <a
-                href="tel:19058482222"
+                href={`tel:${(settings.contact_phone || '19058482222').replace(/\D/g, '')}`}
                 className="px-6 py-3 rounded-full bg-[#ff0000] hover:bg-[#cc0000] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-md flex items-center gap-2"
               >
                 <PhoneCall className="w-4 h-4" />
-                <span>Call (905) 848-2222</span>
+                <span>Call {settings.contact_phone || '(905) 848-2222'}</span>
               </a>
               <Link
                 href="/contact"

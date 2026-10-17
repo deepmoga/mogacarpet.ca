@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useSettings } from '@/context/SettingsContext';
 import { 
   Phone, 
   Mail, 
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 
 export default function ContactClient() {
+  const settings = useSettings();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -67,7 +69,7 @@ export default function ContactClient() {
 
       setSubmittedInquiry(data.inquiry_number);
     } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please call us directly at (905) 848-2222.');
+      setError(err.message || `Something went wrong. Please call us directly at ${settings.contact_phone || '(905) 848-2222'}.`);
     } finally {
       setLoading(false);
     }
@@ -110,10 +112,10 @@ export default function ContactClient() {
                   </div>
                   <div>
                     <strong className="text-stone-900 block font-bold text-sm">Location Address</strong>
-                    <span>1-8550 Torbram Road, Brampton ON, L6T 5J7</span>
+                    <span>{settings.contact_address || '1-8550 Torbram Road, Brampton ON, L6T 5J7'}</span>
                     <span className="block text-stone-400 mt-0.5">(Second Floor Showroom & Distribution)</span>
                     <a 
-                      href="https://maps.app.goo.gl/8pBrk8d4sy7C9vvG8" 
+                      href={settings.google_maps_url || "https://maps.app.goo.gl/8pBrk8d4sy7C9vvG8"} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="inline-block mt-1 font-bold text-[#1212ff] hover:underline"
@@ -129,8 +131,8 @@ export default function ContactClient() {
                   </div>
                   <div>
                     <strong className="text-stone-900 block font-bold text-sm">Phone Support</strong>
-                    <a href="tel:19058482222" className="text-stone-800 hover:text-[#ff0000] font-semibold text-sm">
-                      (905) 848-2222
+                    <a href={`tel:${(settings.contact_phone || '19058482222').replace(/[^0-9+]/g, '')}`} className="text-stone-800 hover:text-[#ff0000] font-semibold text-sm">
+                      {settings.contact_phone || '(905) 848-2222'}
                     </a>
                     <span className="block text-stone-400">Call or Text anytime for immediate assistance</span>
                   </div>
@@ -142,8 +144,8 @@ export default function ContactClient() {
                   </div>
                   <div>
                     <strong className="text-stone-900 block font-bold text-sm">Email Address</strong>
-                    <a href="mailto:info@mogacarpet.ca" className="text-stone-800 hover:text-[#1212ff] font-semibold">
-                      info@mogacarpet.ca
+                    <a href={`mailto:${settings.contact_email || 'info@mogacarpet.ca'}`} className="text-stone-800 hover:text-[#1212ff] font-semibold">
+                      {settings.contact_email || 'info@mogacarpet.ca'}
                     </a>
                     <span className="block text-stone-400">Quotes, plans, contractor blueprints</span>
                   </div>
@@ -155,7 +157,7 @@ export default function ContactClient() {
                   </div>
                   <div>
                     <strong className="text-stone-900 block font-bold text-sm">Operating Hours</strong>
-                    <span>Monday to Saturday: <strong>11:00 AM – 5:00 PM</strong></span>
+                    <span>{settings.business_hours || 'Monday to Saturday: 11:00 AM – 5:00 PM'}</span>
                     <span className="block text-stone-400">Sunday: Closed (Available by special appointment)</span>
                   </div>
                 </div>
@@ -183,11 +185,11 @@ export default function ContactClient() {
                 Book a complimentary in-home visit anywhere in the GTA. We measure your rooms, assess subfloors, and provide on-the-spot quotes.
               </p>
               <a
-                href="tel:19058482222"
+                href={`tel:${(settings.contact_phone || '19058482222').replace(/[^0-9+]/g, '')}`}
                 className="inline-flex items-center gap-2 text-xs font-bold text-white bg-[#ff0000] hover:bg-[#cc0000] px-4 py-2 rounded-xl transition-colors"
               >
                 <Phone className="w-3.5 h-3.5" />
-                <span>Call to Schedule: (905) 848-2222</span>
+                <span>Call to Schedule: {settings.contact_phone || '(905) 848-2222'}</span>
               </a>
             </div>
 

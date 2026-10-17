@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useSettings } from '@/context/SettingsContext';
 import { MapPin, Phone, Clock, Calendar, CheckCircle, Navigation, ArrowRight } from 'lucide-react';
 
 export default function ShowroomVisit() {
+  const settings = useSettings();
   const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -77,7 +79,7 @@ export default function ShowroomVisit() {
                   </div>
                   <div>
                     <strong className="block text-white font-semibold">Showroom Address</strong>
-                    <span>1-8550 Torbram Road, Brampton, ON, Canada</span>
+                    <span>{settings.contact_address || '1-8550 Torbram Road, Brampton, ON, Canada'}</span>
                     <span className="block text-stone-400 text-xs">(Second Floor • Free Customer Parking)</span>
                   </div>
                 </div>
@@ -88,8 +90,8 @@ export default function ShowroomVisit() {
                   </div>
                   <div>
                     <strong className="block text-white font-semibold">Direct Call or Text</strong>
-                    <a href="tel:19058482222" className="text-[#ff4d4d] hover:underline font-bold text-base">
-                      1-905-848-2222
+                    <a href={`tel:${(settings.contact_phone || '19058482222').replace(/[^0-9+]/g, '')}`} className="text-[#ff4d4d] hover:underline font-bold text-base">
+                      {settings.contact_phone || '1-905-848-2222'}
                     </a>
                   </div>
                 </div>
@@ -100,7 +102,7 @@ export default function ShowroomVisit() {
                   </div>
                   <div>
                     <strong className="block text-white font-semibold">Hours of Operation</strong>
-                    <span>Monday to Saturday: 11:00 AM – 5:00 PM</span>
+                    <span>{settings.business_hours || 'Monday to Saturday: 11:00 AM – 5:00 PM'}</span>
                     <span className="block text-[#4d4dff] text-xs font-semibold">Preferred by Appointment</span>
                   </div>
                 </div>
@@ -110,7 +112,7 @@ export default function ShowroomVisit() {
             {/* Google Maps Button */}
             <div className="pt-6 border-t border-[#182046] flex flex-wrap gap-4">
               <a
-                href="https://maps.app.goo.gl/8pBrk8d4sy7C9vvG8"
+                href={settings.google_maps_url || "https://maps.app.goo.gl/8pBrk8d4sy7C9vvG8"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[#1212ff] hover:bg-[#0a0ad8] text-white font-bold text-xs transition-colors shadow-md gap-2"
@@ -120,10 +122,10 @@ export default function ShowroomVisit() {
               </a>
 
               <a
-                href="tel:19058482222"
+                href={`tel:${(settings.contact_phone || '19058482222').replace(/[^0-9+]/g, '')}`}
                 className="inline-flex items-center justify-center px-6 py-3 rounded-xl border border-[#ff0000] text-white hover:bg-[#ff0000]/20 font-bold text-xs transition-colors"
               >
-                <span>Call (905) 848-2222</span>
+                <span>Call {settings.contact_phone || '(905) 848-2222'}</span>
               </a>
             </div>
 
@@ -149,7 +151,7 @@ export default function ShowroomVisit() {
                   <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto" />
                   <h4 className="font-bold text-lg text-stone-900">Showroom VIP Pass Confirmed!</h4>
                   <p className="text-xs text-stone-600 max-w-sm mx-auto">
-                    Thank you! We've reserved your slot and sent confirmation details. See you at 1-8550 Torbram Road, Brampton!
+                    Thank you! We've reserved your slot and sent confirmation details. See you at {settings.contact_address || 'our showroom'}!
                   </p>
                 </div>
               ) : (
@@ -254,7 +256,7 @@ export default function ShowroomVisit() {
 
             <div className="pt-4 text-center">
               <span className="text-[11px] text-stone-500">
-                Prefer immediate help? Call our showroom directly at <a href="tel:19058482222" className="text-[#1212ff] font-bold underline">(905) 848-2222</a>
+                Prefer immediate help? Call our showroom directly at <a href={`tel:${(settings.contact_phone || '19058482222').replace(/\D/g, '')}`} className="text-[#1212ff] font-bold underline">{settings.contact_phone || '(905) 848-2222'}</a>
               </span>
             </div>
 

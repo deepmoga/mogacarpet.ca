@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { X, Send, CheckCircle2, Phone, Mail, User, Ruler, AlertCircle, Sparkles } from 'lucide-react';
+import { useSettings } from '@/context/SettingsContext';
 
 interface ProductInquiryModalProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export default function ProductInquiryModal({
   selectedColor,
   initialQuantity = 1,
 }: ProductInquiryModalProps) {
+  const { settings } = useSettings();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -83,7 +85,7 @@ export default function ProductInquiryModal({
 
       setSubmittedInquiry(data.inquiry_number);
     } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please call us directly at (905) 848-2222.');
+      setError(err.message || `Something went wrong. Please call us directly at ${settings.contact_phone || '(905) 848-2222'}.`);
     } finally {
       setLoading(false);
     }
@@ -140,8 +142,8 @@ export default function ProductInquiryModal({
               </p>
               <div className="p-3 bg-stone-50 rounded-2xl border border-stone-200 text-xs text-stone-600 space-y-1">
                 <div>Need an immediate answer?</div>
-                <a href="tel:19058482222" className="inline-flex items-center gap-1.5 font-bold text-[#ff0000] hover:underline">
-                  <Phone className="w-3.5 h-3.5" /> Call (905) 848-2222
+                <a href={`tel:${(settings.contact_phone || '19058482222').replace(/\D/g, '')}`} className="inline-flex items-center gap-1.5 font-bold text-[#ff0000] hover:underline">
+                  <Phone className="w-3.5 h-3.5" /> Call {settings.contact_phone || '(905) 848-2222'}
                 </a>
               </div>
               <div className="pt-2">

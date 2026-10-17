@@ -21,6 +21,7 @@ import {
   Store
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useSettings } from '@/context/SettingsContext';
 import { CATEGORIES, Category } from '@/data/categories';
 import { searchCatalog } from '@/data/products';
 
@@ -28,6 +29,7 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const { totalItems, setIsCartOpen, wishlist, setQuoteModalOpen } = useCart();
+  const settings = useSettings();
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -128,23 +130,23 @@ export default function Navbar() {
               <Sparkles className="w-3 h-3 mr-1" /> SPECIAL PROMO
             </span>
             <span className="text-stone-300">
-              Free Installation on Select Carpets &amp; Vinyl Planks across the GTA!
+              {settings.announcement_text || 'Free Installation on Select Carpets & Vinyl Planks across the GTA!'}
             </span>
           </div>
           <div className="flex items-center space-x-5 text-stone-300">
-            <a href="tel:19058482222" className="flex items-center hover:text-[#ff4d4d] transition-colors font-medium">
+            <a href={`tel:${(settings.contact_phone || '19058482222').replace(/[^0-9+]/g, '')}`} className="flex items-center hover:text-[#ff4d4d] transition-colors font-medium">
               <Phone className="w-3.5 h-3.5 mr-1.5 text-[#ff0000]" />
-              <span>Call / Text: (905) 848-2222</span>
+              <span>Call / Text: {settings.contact_phone || '(905) 848-2222'}</span>
             </a>
             <span className="hidden lg:inline text-stone-600">|</span>
             <span className="hidden lg:flex items-center">
               <MapPin className="w-3.5 h-3.5 mr-1 text-[#4d4dff]" />
-              1-8550 Torbram Rd, Brampton ON
+              {settings.contact_address || '1-8550 Torbram Rd, Brampton ON'}
             </span>
             <span className="hidden xl:inline text-stone-600">|</span>
             <span className="hidden xl:flex items-center">
               <Clock className="w-3.5 h-3.5 mr-1 text-[#4d4dff]" />
-              Mon-Sat: 11AM - 5PM (By Appt)
+              {settings.business_hours || 'Mon-Sat: 11AM - 5PM (By Appt)'}
             </span>
           </div>
         </div>
@@ -163,8 +165,8 @@ export default function Navbar() {
             <Link href="/" className="flex items-center space-x-3 flex-shrink-0 group">
               <div className="relative h-12 w-48 sm:h-14 sm:w-56">
                 <Image
-                  src="/images/cropped-web-logo-moga-carpet-flooring-5.png"
-                  alt="Moga Carpet &amp; Flooring Brampton"
+                  src={settings.header_logo_url || settings.logo_url || '/images/cropped-web-logo-moga-carpet-flooring-5.png'}
+                  alt={settings.site_title || "Moga Carpet & Flooring Brampton"}
                   fill
                   className="object-contain object-left group-hover:scale-102 transition-transform duration-300"
                   priority
@@ -389,7 +391,12 @@ export default function Navbar() {
             {/* Drawer top bar */}
             <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-white border-b border-stone-100 shadow-sm">
               <Link href="/" onClick={() => setMobileMenuOpen(false)} className="relative h-9 w-32">
-                <Image src="/images/cropped-web-logo-moga-carpet-flooring-5.png" alt="Moga Carpet" fill className="object-contain object-left" />
+                <Image
+                  src={settings.header_logo_url || settings.logo_url || '/images/cropped-web-logo-moga-carpet-flooring-5.png'}
+                  alt={settings.site_title || "Moga Carpet"}
+                  fill
+                  className="object-contain object-left"
+                />
               </Link>
               <button type="button" onClick={() => setMobileMenuOpen(false)} className="p-2 rounded-lg text-stone-500 hover:bg-stone-100 cursor-pointer" aria-label="Close menu">
                 <X className="w-5 h-5 text-[#1212ff]" />
@@ -481,8 +488,8 @@ export default function Navbar() {
 
               {/* CTA buttons */}
               <div className="mt-5 pt-4 border-t border-stone-200 space-y-2">
-                <a href="tel:19058482222" className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#ff0000] text-white font-bold text-sm">
-                  <Phone className="w-4 h-4" /><span>Call Now: (905) 848-2222</span>
+                <a href={`tel:${(settings.contact_phone || '19058482222').replace(/[^0-9+]/g, '')}`} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#ff0000] text-white font-bold text-sm">
+                  <Phone className="w-4 h-4" /><span>Call Now: {settings.contact_phone || '(905) 848-2222'}</span>
                 </a>
                 <button type="button" onClick={() => { setMobileMenuOpen(false); setQuoteModalOpen(true); }} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-[#1212ff] text-[#1212ff] font-bold text-sm cursor-pointer">
                   <Calculator className="w-4 h-4" /><span>Get Free Measurement &amp; Estimate</span>
