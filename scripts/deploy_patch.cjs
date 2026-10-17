@@ -57,6 +57,7 @@ conn.on('ready', async () => {
       rm -f patch.tar.gz
       npm run build
       pm2 restart mogacarpet
+      mysql -u mogacarpet -p9MlpYifiWYottlW mogacarpet -e "UPDATE settings SET value_text = '' WHERE key_name = 'announcement_text';" || true
       sleep 3
       echo "=== TESTING API SETTINGS ==="
       curl -s http://127.0.0.1:3050/api/settings

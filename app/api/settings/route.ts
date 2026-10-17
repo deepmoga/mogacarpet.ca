@@ -21,7 +21,7 @@ export async function GET() {
       contact_address: settings.contact_address || '1-8550 Torbram Road, Brampton, ON, Canada (Second Floor)',
       business_hours: settings.business_hours || 'Monday to Saturday 11:00 AM – 5:00 PM (Preferred By Appointment)',
       google_maps_url: settings.google_maps_url || 'https://maps.app.goo.gl/8pBrk8d4sy7C9vvG8',
-      announcement_text: settings.announcement_text || 'Free Installation on Select Carpets & Vinyl Planks across the GTA!',
+      announcement_text: settings.announcement_text || '',
     };
 
     return NextResponse.json({ success: true, settings: publicSettings });

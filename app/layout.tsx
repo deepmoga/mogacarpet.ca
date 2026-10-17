@@ -47,7 +47,21 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const settings = await getAllSettings();
-  const favicon = settings.favicon_url || '/favicon.ico';
+  const publicSettings = {
+    site_title: settings.site_title,
+    tagline: settings.tagline,
+    header_logo_url: settings.header_logo_url,
+    footer_logo_url: settings.footer_logo_url,
+    logo_url: settings.logo_url,
+    favicon_url: settings.favicon_url,
+    contact_email: settings.contact_email,
+    contact_phone: settings.contact_phone,
+    contact_address: settings.contact_address,
+    business_hours: settings.business_hours,
+    google_maps_url: settings.google_maps_url,
+    announcement_text: settings.announcement_text || '',
+  };
+  const favicon = publicSettings.favicon_url || '/favicon.ico';
 
   return (
     <html lang="en">
@@ -57,7 +71,7 @@ export default async function RootLayout({
         <link rel="apple-touch-icon" href={favicon} />
       </head>
       <body className="antialiased selection:bg-[#1212ff] selection:text-white">
-        <SettingsProvider initialSettings={settings}>
+        <SettingsProvider initialSettings={publicSettings}>
           <CartProvider>
             {children}
             <QuoteModal />

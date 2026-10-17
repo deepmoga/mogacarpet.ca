@@ -153,7 +153,7 @@ export default function AdminPage() {
     contact_phone: '1-905-848-2222',
     contact_address: '1-8550 Torbram Road, Brampton, ON, Canada (Second Floor)',
     business_hours: 'Monday to Saturday 11:00 AM – 5:00 PM (Preferred By Appointment)',
-    announcement_text: 'Free Installation on Select Carpets & Vinyl Planks across the GTA!',
+    announcement_text: '',
     admin_username: 'admin',
     new_password: '',
     confirm_password: '',

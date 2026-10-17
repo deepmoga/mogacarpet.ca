@@ -38,7 +38,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   contact_address: '1-8550 Torbram Road, Brampton, ON, Canada (Second Floor)',
   business_hours: 'Monday to Saturday 11:00 AM – 5:00 PM (Preferred By Appointment)',
   google_maps_url: 'https://maps.app.goo.gl/8pBrk8d4sy7C9vvG8',
-  announcement_text: 'Free Installation on Select Carpets & Vinyl Planks across the GTA!',
+  announcement_text: '',
   admin_username: 'admin',
   admin_password: 'admin123',
   smtp_host: 'smtp.gmail.com',
