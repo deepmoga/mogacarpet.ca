@@ -11,7 +11,7 @@ export function getDbPool(): mysql.Pool {
       database: process.env.DB_NAME || 'mogacarpet',
       port: Number(process.env.DB_PORT) || 3306,
       waitForConnections: true,
-      connectionLimit: 15,
+      connectionLimit: 5,
       queueLimit: 0,
       enableKeepAlive: true,
       keepAliveInitialDelay: 0,

@@ -22,6 +22,8 @@ export async function GET() {
       business_hours: settings.business_hours || 'Monday to Saturday 11:00 AM – 5:00 PM (Preferred By Appointment)',
       google_maps_url: settings.google_maps_url || 'https://maps.app.goo.gl/8pBrk8d4sy7C9vvG8',
       announcement_text: settings.announcement_text || '',
+      recaptcha_site_key: settings.recaptcha_site_key || '',
+      recaptcha_enabled: settings.recaptcha_enabled === 'true' || settings.recaptcha_enabled === '1',
     };
 
     return NextResponse.json({ success: true, settings: publicSettings });

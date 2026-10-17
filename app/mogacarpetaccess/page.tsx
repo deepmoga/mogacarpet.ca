@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import GoogleReCaptcha, { GoogleReCaptchaHandle } from '@/components/GoogleReCaptcha';
+import { useSettings } from '@/context/SettingsContext';
 import {
   LayoutDashboard,
   Package,
@@ -100,12 +102,17 @@ interface Inquiry {
 }
 
 export default function AdminPage() {
+  // Public Site Settings (for reCAPTCHA login check, branding, etc.)
+  const publicSettings = useSettings();
+
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [loginUsername, setLoginUsername] = useState('admin');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
+  const [loginCaptchaToken, setLoginCaptchaToken] = useState<string | null>(null);
+  const loginCaptchaRef = useRef<GoogleReCaptchaHandle>(null);
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'inquiries' | 'quotes' | 'categories' | 'settings'>('dashboard');
@@ -165,9 +172,13 @@ export default function AdminPage() {
     smtp_from_email: 'info@mogacarpet.ca',
     smtp_from_name: 'Moga Carpet & Flooring',
     admin_notification_email: 'info@mogacarpet.ca',
+    recaptcha_enabled: 'false',
+    recaptcha_site_key: '',
+    recaptcha_secret_key: '',
   });
   const [showSmtpPass, setShowSmtpPass] = useState(false);
   const [showNewPass, setShowNewPass] = useState(false);
+  const [showRecaptchaSecret, setShowRecaptchaSecret] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [testEmailLoading, setTestEmailLoading] = useState(false);
@@ -306,20 +317,35 @@ export default function AdminPage() {
     e.preventDefault();
     setLoginLoading(true);
     setLoginError('');
+
+    if (publicSettings.recaptcha_enabled && publicSettings.recaptcha_site_key && !loginCaptchaToken) {
+      setLoginError('Please complete the Google reCAPTCHA verification ("I am not a robot").');
+      setLoginLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: loginUsername, password: loginPassword }),
+        body: JSON.stringify({ 
+          username: loginUsername, 
+          password: loginPassword,
+          captcha_token: loginCaptchaToken,
+        }),
       });
       const data = await res.json();
       if (data.success) {
         setIsAuthenticated(true);
       } else {
         setLoginError(data.error || 'Invalid credentials');
+        loginCaptchaRef.current?.reset();
+        setLoginCaptchaToken(null);
       }
     } catch {
       setLoginError('Failed to connect to server');
+      loginCaptchaRef.current?.reset();
+      setLoginCaptchaToken(null);
     } finally {
       setLoginLoading(false);
     }
@@ -485,6 +511,16 @@ export default function AdminPage() {
                 className="w-full bg-stone-50 border border-stone-300 rounded-xl px-4 py-2.5 text-xs text-stone-900 focus:outline-none focus:border-[#1212ff] focus:ring-1 focus:ring-[#1212ff]"
               />
             </div>
+
+            {publicSettings.recaptcha_enabled && publicSettings.recaptcha_site_key && (
+              <div className="py-1">
+                <GoogleReCaptcha
+                  ref={loginCaptchaRef}
+                  siteKey={publicSettings.recaptcha_site_key}
+                  onChange={setLoginCaptchaToken}
+                />
+              </div>
+            )}
 
             <button
               type="submit"
@@ -1712,6 +1748,96 @@ export default function AdminPage() {
                       onChange={(e) => setSettings({ ...settings, announcement_text: e.target.value })}
                       className="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#1212ff]"
                     />
+                  </div>
+                </div>
+
+                {/* 3. GOOGLE RECAPTCHA SECURITY SETTINGS */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <ShieldCheck className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-stone-900">Google reCAPTCHA Security</h3>
+                        <p className="text-xs text-stone-500">Protect login, quotes, contact forms & product inquiries against bots</p>
+                      </div>
+                    </div>
+                    <label className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-stone-50 border border-stone-200 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={settings.recaptcha_enabled === 'true' || settings.recaptcha_enabled === true}
+                        onChange={(e) => setSettings({ ...settings, recaptcha_enabled: e.target.checked ? 'true' : 'false' })}
+                        className="w-4 h-4 accent-[#1212ff] rounded cursor-pointer"
+                      />
+                      <span className="text-xs font-bold text-stone-800">
+                        {settings.recaptcha_enabled === 'true' || settings.recaptcha_enabled === true ? (
+                          <span className="text-emerald-600">reCAPTCHA Enabled</span>
+                        ) : (
+                          <span className="text-stone-500">reCAPTCHA Disabled</span>
+                        )}
+                      </span>
+                    </label>
+                  </div>
+
+                  <div className="bg-blue-50/70 p-4 rounded-2xl border border-blue-100 text-xs text-stone-600 space-y-1.5">
+                    <div className="font-bold text-[#1212ff] flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-amber-500" />
+                      <span>Google reCAPTCHA v2 ("I'm not a robot" Checkbox)</span>
+                    </div>
+                    <p className="leading-relaxed">
+                      Register your site at <a href="https://www.google.com/recaptcha/admin" target="_blank" rel="noopener noreferrer" className="text-[#1212ff] font-bold underline">Google reCAPTCHA Admin Console</a>. Choose <strong>reCAPTCHA v2 &rarr; "I&apos;m not a robot" Checkbox</strong> and add your domains (<code className="bg-white px-1.5 py-0.5 rounded border border-blue-200 text-[#1212ff]">mogacarpet.ca</code> and <code className="bg-white px-1.5 py-0.5 rounded border border-blue-200 text-[#1212ff]">localhost</code>).
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold text-stone-700 mb-1">
+                        Site Key (Public / Client-side)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 6Lxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                        value={settings.recaptcha_site_key || ''}
+                        onChange={(e) => setSettings({ ...settings, recaptcha_site_key: e.target.value })}
+                        className="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#1212ff]"
+                      />
+                      <span className="text-[11px] text-stone-400 mt-1 block">
+                        Visible to browser visitors to render the verification checkbox.
+                      </span>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-bold text-stone-700">
+                          Secret Key (Private / Server-side)
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setShowRecaptchaSecret(!showRecaptchaSecret)}
+                          className="text-[11px] font-semibold text-[#1212ff] hover:underline cursor-pointer"
+                        >
+                          {showRecaptchaSecret ? 'Hide' : 'Show'}
+                        </button>
+                      </div>
+                      <input
+                        type={showRecaptchaSecret ? 'text' : 'password'}
+                        placeholder="e.g. 6Lxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                        value={settings.recaptcha_secret_key || ''}
+                        onChange={(e) => setSettings({ ...settings, recaptcha_secret_key: e.target.value })}
+                        className="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#1212ff]"
+                      />
+                      <span className="text-[11px] text-stone-400 mt-1 block">
+                        Kept confidential on the server to verify submitted tokens with Google.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-stone-50 border border-stone-200 text-stone-600 text-[11px] flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>
+                      When enabled, the verification box automatically protects <strong>Admin Login</strong>, the <strong>Contact Us Form</strong>, and the <strong>Product Inquiry Modal</strong>.
+                    </span>
                   </div>
                 </div>
 

@@ -1,14 +1,24 @@
 import { NextResponse } from 'next/server';
 import { getAllSettings } from '@/lib/settings';
 import { verifyPassword, generateToken } from '@/lib/auth';
+import { verifyRecaptcha } from '@/lib/recaptcha';
 
 export async function POST(req: Request) {
   try {
-    const { username, password } = await req.json();
+    const { username, password, captcha_token } = await req.json();
 
     if (!username || !password) {
       return NextResponse.json(
         { success: false, error: 'Username and password are required' },
+        { status: 400 }
+      );
+    }
+
+    // Verify Google reCAPTCHA if configured & enabled
+    const captchaResult = await verifyRecaptcha(captcha_token);
+    if (!captchaResult.success) {
+      return NextResponse.json(
+        { success: false, error: captchaResult.error || 'reCAPTCHA verification failed' },
         { status: 400 }
       );
     }

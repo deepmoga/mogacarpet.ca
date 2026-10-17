@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth';
+import { verifyRecaptcha } from '@/lib/recaptcha';
 
 async function checkAdminAuth() {
   const cookieStore = await cookies();
@@ -28,6 +29,16 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const data = await req.json();
+
+    // Verify Google reCAPTCHA if configured & enabled
+    const captchaResult = await verifyRecaptcha(data.captcha_token);
+    if (!captchaResult.success) {
+      return NextResponse.json(
+        { success: false, error: captchaResult.error || 'reCAPTCHA verification failed' },
+        { status: 400 }
+      );
+    }
+
     const customerName = data.name || data.customer_name;
     const customerPhone = data.phone || data.customer_phone;
 

@@ -60,6 +60,8 @@ export default async function RootLayout({
     business_hours: settings.business_hours,
     google_maps_url: settings.google_maps_url,
     announcement_text: settings.announcement_text || '',
+    recaptcha_site_key: settings.recaptcha_site_key || '',
+    recaptcha_enabled: settings.recaptcha_enabled === 'true' || settings.recaptcha_enabled === '1',
   };
   const favicon = publicSettings.favicon_url || '/favicon.ico';
 

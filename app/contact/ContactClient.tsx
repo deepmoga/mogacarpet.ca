@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useSettings } from '@/context/SettingsContext';
+import GoogleReCaptcha, { GoogleReCaptchaHandle } from '@/components/GoogleReCaptcha';
 import { 
   Phone, 
   Mail, 
@@ -29,6 +30,8 @@ export default function ContactClient() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submittedInquiry, setSubmittedInquiry] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<GoogleReCaptchaHandle>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +50,11 @@ export default function ContactClient() {
       return;
     }
 
+    if (settings.recaptcha_enabled && settings.recaptcha_site_key && !captchaToken) {
+      setError('Please complete the Google reCAPTCHA verification ("I am not a robot").');
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch('/api/inquiries', {
@@ -59,6 +67,7 @@ export default function ContactClient() {
           customer_phone: phone,
           quantity_sqft: sqft || undefined,
           message: `Subject: ${subject}\nDepartment: ${department}\n\nMessage:\n${message}`,
+          captcha_token: captchaToken,
         }),
       });
 
@@ -69,6 +78,8 @@ export default function ContactClient() {
 
       setSubmittedInquiry(data.inquiry_number);
     } catch (err: any) {
+      captchaRef.current?.reset();
+      setCaptchaToken(null);
       setError(err.message || `Something went wrong. Please call us directly at ${settings.contact_phone || '(905) 848-2222'}.`);
     } finally {
       setLoading(false);
@@ -359,6 +370,17 @@ export default function ContactClient() {
                     className="w-full px-3 py-2.5 text-xs rounded-xl border border-stone-300 focus:outline-none focus:border-[#1212ff] focus:ring-1 focus:ring-[#1212ff]"
                   />
                 </div>
+
+                {/* reCAPTCHA Security */}
+                {settings.recaptcha_enabled && settings.recaptcha_site_key && (
+                  <div className="py-1">
+                    <GoogleReCaptcha
+                      ref={captchaRef}
+                      siteKey={settings.recaptcha_site_key}
+                      onChange={setCaptchaToken}
+                    />
+                  </div>
+                )}
 
                 {/* Submit */}
                 <div className="pt-2">

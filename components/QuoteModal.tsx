@@ -1,14 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
-import { X, Calculator, CheckCircle2, Phone, ShieldCheck } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Calculator, CheckCircle2, Phone, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useSettings } from '@/context/SettingsContext';
+import GoogleReCaptcha, { GoogleReCaptchaHandle } from '@/components/GoogleReCaptcha';
 
 export default function QuoteModal() {
   const { quoteModalOpen, setQuoteModalOpen } = useCart();
-  const { settings } = useSettings();
+  const siteSettings = useSettings();
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<GoogleReCaptchaHandle>(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -24,20 +28,36 @@ export default function QuoteModal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    if (siteSettings.recaptcha_enabled && siteSettings.recaptcha_site_key && !captchaToken) {
+      setError('Please complete the Google reCAPTCHA verification ("I am not a robot").');
+      return;
+    }
+
     try {
-      await fetch('/api/quotes', {
+      const res = await fetch('/api/quotes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, captcha_token: captchaToken }),
       });
-    } catch (err) {
-      console.error(err);
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.error || 'Failed to submit estimate request.');
+        captchaRef.current?.reset();
+        setCaptchaToken(null);
+        return;
+      }
+      setSubmitted(true);
+      setTimeout(() => {
+        setSubmitted(false);
+        setQuoteModalOpen(false);
+      }, 4500);
+    } catch (err: any) {
+      setError(err.message || 'Failed to submit estimate request.');
+      captchaRef.current?.reset();
+      setCaptchaToken(null);
     }
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setQuoteModalOpen(false);
-    }, 4500);
   };
 
   return (
@@ -70,11 +90,11 @@ export default function QuoteModal() {
             </p>
             <div className="pt-4">
               <a
-                href={`tel:${(settings.contact_phone || '19058482222').replace(/\D/g, '')}`}
+                href={`tel:${(siteSettings.contact_phone || '19058482222').replace(/\D/g, '')}`}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1212ff] text-white font-bold text-xs hover:bg-[#0a0ad8] transition-colors shadow-md"
               >
                 <Phone className="w-4 h-4 text-[#ff4d4d]" />
-                <span>Urgent Question? Call {settings.contact_phone || '1-905-848-2222'}</span>
+                <span>Urgent Question? Call {siteSettings.contact_phone || '1-905-848-2222'}</span>
               </a>
             </div>
           </div>
@@ -236,9 +256,27 @@ export default function QuoteModal() {
                 />
               </div>
 
+              {error && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* Google reCAPTCHA Verification */}
+              {siteSettings.recaptcha_enabled && siteSettings.recaptcha_site_key && (
+                <div className="py-1">
+                  <GoogleReCaptcha
+                    ref={captchaRef}
+                    siteKey={siteSettings.recaptcha_site_key}
+                    onChange={setCaptchaToken}
+                  />
+                </div>
+              )}
+
               <button
                 type="submit"
-                className="w-full py-3.5 px-6 rounded-xl text-xs sm:text-sm font-bold text-white bg-[#ff0000] hover:bg-[#cc0000] shadow-md hover:shadow-lg transition-all"
+                className="w-full py-3.5 px-6 rounded-xl text-xs sm:text-sm font-bold text-white bg-[#ff0000] hover:bg-[#cc0000] shadow-md hover:shadow-lg transition-all cursor-pointer"
               >
                 Submit Estimate Request (100% Free)
               </button>

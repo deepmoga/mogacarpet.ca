@@ -15,6 +15,8 @@ export interface PublicSettings {
   business_hours: string;
   google_maps_url: string;
   announcement_text: string;
+  recaptcha_site_key: string;
+  recaptcha_enabled: boolean;
 }
 
 export const DEFAULT_PUBLIC_SETTINGS: PublicSettings = {
@@ -30,6 +32,8 @@ export const DEFAULT_PUBLIC_SETTINGS: PublicSettings = {
   business_hours: 'Monday to Saturday 11:00 AM – 5:00 PM (Preferred By Appointment)',
   google_maps_url: 'https://maps.app.goo.gl/8pBrk8d4sy7C9vvG8',
   announcement_text: '',
+  recaptcha_site_key: '',
+  recaptcha_enabled: false,
 };
 
 interface SettingsContextType {

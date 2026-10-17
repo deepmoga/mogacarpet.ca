@@ -23,6 +23,9 @@ export interface SiteSettings {
   smtp_from_email?: string;
   smtp_from_name?: string;
   admin_notification_email?: string;
+  recaptcha_site_key?: string;
+  recaptcha_secret_key?: string;
+  recaptcha_enabled?: string;
   [key: string]: string | undefined;
 }
 
@@ -49,6 +52,9 @@ const DEFAULT_SETTINGS: SiteSettings = {
   smtp_from_email: 'info@mogacarpet.ca',
   smtp_from_name: 'Moga Carpet & Flooring',
   admin_notification_email: 'info@mogacarpet.ca',
+  recaptcha_site_key: '',
+  recaptcha_secret_key: '',
+  recaptcha_enabled: 'false',
 };
 
 export async function ensureSettingsTable(): Promise<void> {

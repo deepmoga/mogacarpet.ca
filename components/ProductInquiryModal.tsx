@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { X, Send, CheckCircle2, Phone, Mail, User, Ruler, AlertCircle, Sparkles } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
+import GoogleReCaptcha, { GoogleReCaptchaHandle } from '@/components/GoogleReCaptcha';
 
 interface ProductInquiryModalProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ export default function ProductInquiryModal({
   selectedColor,
   initialQuantity = 1,
 }: ProductInquiryModalProps) {
-  const { settings } = useSettings();
+  const siteSettings = useSettings();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -38,6 +39,8 @@ export default function ProductInquiryModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submittedInquiry, setSubmittedInquiry] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<GoogleReCaptchaHandle>(null);
 
   if (!isOpen) return null;
 
@@ -58,6 +61,11 @@ export default function ProductInquiryModal({
       return;
     }
 
+    if (siteSettings.recaptcha_enabled && siteSettings.recaptcha_site_key && !captchaToken) {
+      setError('Please complete the Google reCAPTCHA verification ("I am not a robot").');
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch('/api/inquiries', {
@@ -75,6 +83,7 @@ export default function ProductInquiryModal({
           customer_phone: phone,
           quantity_sqft: quantitySqft || `${initialQuantity} ${product.unit || 'units'}`,
           message,
+          captcha_token: captchaToken,
         }),
       });
 
@@ -85,7 +94,9 @@ export default function ProductInquiryModal({
 
       setSubmittedInquiry(data.inquiry_number);
     } catch (err: any) {
-      setError(err.message || `Something went wrong. Please call us directly at ${settings.contact_phone || '(905) 848-2222'}.`);
+      captchaRef.current?.reset();
+      setCaptchaToken(null);
+      setError(err.message || `Something went wrong. Please call us directly at ${siteSettings.contact_phone || '(905) 848-2222'}.`);
     } finally {
       setLoading(false);
     }
@@ -94,6 +105,8 @@ export default function ProductInquiryModal({
   const handleResetAndClose = () => {
     setSubmittedInquiry(null);
     setError(null);
+    setCaptchaToken(null);
+    captchaRef.current?.reset();
     onClose();
   };
 
@@ -142,8 +155,8 @@ export default function ProductInquiryModal({
               </p>
               <div className="p-3 bg-stone-50 rounded-2xl border border-stone-200 text-xs text-stone-600 space-y-1">
                 <div>Need an immediate answer?</div>
-                <a href={`tel:${(settings.contact_phone || '19058482222').replace(/\D/g, '')}`} className="inline-flex items-center gap-1.5 font-bold text-[#ff0000] hover:underline">
-                  <Phone className="w-3.5 h-3.5" /> Call {settings.contact_phone || '(905) 848-2222'}
+                <a href={`tel:${(siteSettings.contact_phone || '19058482222').replace(/\D/g, '')}`} className="inline-flex items-center gap-1.5 font-bold text-[#ff0000] hover:underline">
+                  <Phone className="w-3.5 h-3.5" /> Call {siteSettings.contact_phone || '(905) 848-2222'}
                 </a>
               </div>
               <div className="pt-2">
@@ -280,6 +293,17 @@ export default function ProductInquiryModal({
                   className="w-full px-3 py-2 text-xs rounded-xl border border-stone-300 focus:outline-none focus:border-[#1212ff] focus:ring-1 focus:ring-[#1212ff]"
                 />
               </div>
+
+              {/* Google reCAPTCHA Verification */}
+              {siteSettings.recaptcha_enabled && siteSettings.recaptcha_site_key && (
+                <div className="py-1">
+                  <GoogleReCaptcha
+                    ref={captchaRef}
+                    siteKey={siteSettings.recaptcha_site_key}
+                    onChange={setCaptchaToken}
+                  />
+                </div>
+              )}
 
               {/* Submit Button */}
               <div className="pt-2">
