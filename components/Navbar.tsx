@@ -168,6 +168,7 @@ export default function Navbar() {
                   src={settings.header_logo_url || settings.logo_url || '/images/cropped-web-logo-moga-carpet-flooring-5.png'}
                   alt={settings.site_title || "Moga Carpet & Flooring Brampton"}
                   fill
+                  unoptimized
                   className="object-contain object-left group-hover:scale-102 transition-transform duration-300"
                   priority
                 />
@@ -395,6 +396,7 @@ export default function Navbar() {
                   src={settings.header_logo_url || settings.logo_url || '/images/cropped-web-logo-moga-carpet-flooring-5.png'}
                   alt={settings.site_title || "Moga Carpet"}
                   fill
+                  unoptimized
                   className="object-contain object-left"
                 />
               </Link>

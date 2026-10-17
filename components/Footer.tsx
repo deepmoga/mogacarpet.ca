@@ -88,6 +88,7 @@ export default function Footer() {
                   src={settings.footer_logo_url || settings.header_logo_url || settings.logo_url || '/images/cropped-web-logo-moga-carpet-flooring-5.png'}
                   alt={settings.site_title || "Moga Carpet & Flooring"}
                   fill
+                  unoptimized
                   className="object-contain object-left brightness-110"
                 />
               </div>
