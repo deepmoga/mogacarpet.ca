@@ -40,7 +40,7 @@ export const PRODUCTS: Product[] = [
     categoryName: 'Commercial & Saxony Carpet',
     price: 15.99,
     originalPrice: 21.99,
-    unit: 'sq. yd.',
+    unit: 'sq. ft.',
     image: '/images/Fort-Wood-Carpet-Joy-Carpets.jpg',
     rating: 4.9,
     reviewsCount: 38,
@@ -62,7 +62,7 @@ export const PRODUCTS: Product[] = [
     categoryName: 'Home Theater & Print Carpet',
     price: 16.99,
     originalPrice: 22.99,
-    unit: 'sq. yd.',
+    unit: 'sq. ft.',
     image: '/images/Have-A-Blast-Carpet-Joy-Carpets.jpg',
     rating: 5.0,
     reviewsCount: 24,
@@ -84,7 +84,7 @@ export const PRODUCTS: Product[] = [
     categoryName: 'Print Carpets',
     price: 16.99,
     originalPrice: 22.50,
-    unit: 'sq. yd.',
+    unit: 'sq. ft.',
     image: '/images/Fun-and-Games-Carpet-Joy-Carpets.jpg',
     rating: 4.8,
     reviewsCount: 19,
@@ -106,7 +106,7 @@ export const PRODUCTS: Product[] = [
     categoryName: 'Home Theater Carpets',
     price: 16.99,
     originalPrice: 24.00,
-    unit: 'sq. yd.',
+    unit: 'sq. ft.',
     image: '/images/Space-Explorer-Fluorescent-Quick-ship-Carpet-Joy-Carpets.jpg',
     rating: 4.9,
     reviewsCount: 42,
@@ -260,7 +260,7 @@ export const PRODUCTS: Product[] = [
     categoryName: 'Themed & Hospitality Carpet',
     price: 15.99,
     originalPrice: 21.00,
-    unit: 'sq. yd.',
+    unit: 'sq. ft.',
     image: '/images/Roll-the-Dice-Carpet-Joy-Carpets.jpg',
     rating: 4.9,
     reviewsCount: 22,
@@ -282,7 +282,7 @@ export const PRODUCTS: Product[] = [
     categoryName: 'Hospitality & Commercial',
     price: 15.99,
     originalPrice: 20.50,
-    unit: 'sq. yd.',
+    unit: 'sq. ft.',
     image: '/images/Atlantic-City-Carpet-Joy-Carpets.jpg',
     rating: 4.7,
     reviewsCount: 16,
@@ -312,6 +312,8 @@ export const ALL_IMPORTED_PRODUCTS: Product[] = (allProductsRaw as any[]).map((p
   else if (catStr.includes('hardwood') || catStr.includes('wood')) catSlug = 'solid-hardwood';
   else if (catStr.includes('underpad')) catSlug = 'underpad';
 
+  const isCarpet = catSlug === 'carpets' || catSlug === 'carpet-tiles';
+
   return {
     id: String(p.id),
     sku: p.sku || '',
@@ -332,7 +334,7 @@ export const ALL_IMPORTED_PRODUCTS: Product[] = (allProductsRaw as any[]).map((p
     }),
     rating: 4.8,
     reviewsCount: 12,
-    unit: p.name.toLowerCase().includes('tile') || p.name.toLowerCase().includes('vinyl') ? 'sq. ft.' : 'sq. yd.',
+    unit: isCarpet || p.name.toLowerCase().includes('tile') || p.name.toLowerCase().includes('vinyl') ? 'sq. ft.' : 'sq. yd.',
     description: p.description || p.shortDescription || '',
     features: ['Direct Mill Certified', 'Professional Installation Available', 'In-Stock Brampton Warehouse'],
     specs: {

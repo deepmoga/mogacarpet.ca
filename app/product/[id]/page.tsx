@@ -81,6 +81,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
     features = [];
   }
 
+  const isCarpetCategory =
+    rawProd.category_id === 'carpets' ||
+    rawProd.category_id === 'carpet-tiles' ||
+    (rawProd.category_label && rawProd.category_label.toLowerCase().includes('carpet'));
+
+  let displayUnit = rawProd.unit;
+  if (isCarpetCategory && (!displayUnit || displayUnit.toLowerCase().includes('yd'))) {
+    displayUnit = 'sq. ft.';
+  } else if (!displayUnit) {
+    displayUnit = isCarpetCategory ? 'sq. ft.' : 'sq. yd.';
+  }
+
   const product = {
     id: String(rawProd.id),
     name: rawProd.name,
@@ -91,7 +103,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     price: parseFloat(rawProd.price) || 0,
     regular_price: rawProd.regular_price ? parseFloat(rawProd.regular_price) : null,
     sale_price: rawProd.sale_price ? parseFloat(rawProd.sale_price) : null,
-    unit: rawProd.unit || 'sq. yd.',
+    unit: displayUnit,
     rating: parseFloat(rawProd.rating) || 5.0,
     reviews_count: rawProd.reviews_count || 18,
     badge: rawProd.badge || null,
@@ -106,10 +118,25 @@ export default async function ProductPage({ params }: ProductPageProps) {
   };
 
   // Fetch 4 related products from the same category
-  const relatedRows = await query<any[]>(
+  const rawRelatedRows = await query<any[]>(
     'SELECT id, name, slug, price, unit, image, badge, category_id, category_label FROM products WHERE category_id = ? AND id != ? ORDER BY id DESC LIMIT 4;',
     [product.category_id, product.id]
   );
+
+  const relatedProducts = (rawRelatedRows || []).map((rel) => {
+    const isRelCarpet =
+      rel.category_id === 'carpets' ||
+      rel.category_id === 'carpet-tiles' ||
+      (rel.category_label && rel.category_label.toLowerCase().includes('carpet'));
+    let relUnit = rel.unit;
+    if (isRelCarpet && (!relUnit || relUnit.toLowerCase().includes('yd'))) {
+      relUnit = 'sq. ft.';
+    }
+    return {
+      ...rel,
+      unit: relUnit || (isRelCarpet ? 'sq. ft.' : 'sq. yd.'),
+    };
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -117,7 +144,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <main className="flex-1">
         <ProductDetailsClient
           product={product}
-          relatedProducts={relatedRows || []}
+          relatedProducts={relatedProducts}
         />
       </main>
       <Footer />

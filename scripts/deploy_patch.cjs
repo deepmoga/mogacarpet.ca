@@ -55,6 +55,7 @@ conn.on('ready', async () => {
       cd /home/mogacarpet/app
       tar -xzf patch.tar.gz
       rm -f patch.tar.gz
+      node scripts/update_carpet_units.cjs
       npm run build
       pm2 restart mogacarpet
       mysql -u mogacarpet -p9MlpYifiWYottlW mogacarpet -e "UPDATE settings SET value_text = '' WHERE key_name = 'announcement_text';" || true

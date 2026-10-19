@@ -136,7 +136,8 @@ async function importAllToMySQL() {
     else if (catStr.includes('countertop')) catId = 'countertop';
     else if (catStr.includes('runner')) catId = 'stair-runner';
 
-    const unit = p.name.toLowerCase().includes('tile') || p.name.toLowerCase().includes('vinyl') ? 'sq. ft.' : 'sq. yd.';
+    const isCarpet = catId === 'carpets' || catId === 'carpet-tiles';
+    const unit = isCarpet || p.name.toLowerCase().includes('tile') || p.name.toLowerCase().includes('vinyl') ? 'sq. ft.' : 'sq. yd.';
 
     await conn.query(`
       INSERT INTO \`products\` (

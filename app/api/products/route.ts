@@ -108,7 +108,8 @@ export async function POST(req: Request) {
     const salePrice = data.sale_price ? parseFloat(data.sale_price) : null;
     const categoryId = data.category_id || 'carpets';
     const categoryLabel = data.category_label || 'Carpets & Broadloom';
-    const unit = data.unit || (categoryId.includes('vinyl') || categoryId.includes('tile') ? 'sq. ft.' : 'sq. yd.');
+    const isCarpet = categoryId.includes('carpet');
+    const unit = data.unit || (isCarpet || categoryId.includes('vinyl') || categoryId.includes('tile') ? 'sq. ft.' : 'sq. yd.');
     const inStock = data.in_stock ? 1 : 0;
     const isFeatured = data.is_featured ? 1 : 0;
     const image = data.image || '/images/slide01.jpg';

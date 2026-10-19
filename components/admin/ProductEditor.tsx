@@ -70,8 +70,8 @@ const COLOR_PRESETS = [
 ];
 
 const UNIT_OPTIONS = [
-  'sq. yd.',
   'sq. ft.',
+  'sq. yd.',
   'rug (5x8)',
   'rug (8x10)',
   'runner (2.5x10)',
@@ -104,7 +104,7 @@ export default function ProductEditor({ mode, productId, initialProduct }: Produ
   const [price, setPrice] = useState(initialProduct?.price !== undefined ? String(initialProduct.price) : '');
   const [regularPrice, setRegularPrice] = useState(initialProduct?.regular_price !== undefined && initialProduct?.regular_price !== null ? String(initialProduct.regular_price) : '');
   const [salePrice, setSalePrice] = useState(initialProduct?.sale_price !== undefined && initialProduct?.sale_price !== null ? String(initialProduct.sale_price) : '');
-  const [unit, setUnit] = useState(initialProduct?.unit || 'sq. yd.');
+  const [unit, setUnit] = useState(initialProduct?.unit || 'sq. ft.');
   const [categoryId, setCategoryId] = useState(initialProduct?.category_id || 'carpets');
   const [categoryLabel, setCategoryLabel] = useState(initialProduct?.category_label || 'Carpets & Broadloom');
   const [badge, setBadge] = useState(initialProduct?.badge || '');
@@ -229,7 +229,7 @@ export default function ProductEditor({ mode, productId, initialProduct }: Produ
     setCategoryId(rootId);
     setCategoryLabel(fullPath);
     // Auto-suggest unit
-    if (rootId === 'carpets') setUnit('sq. yd.');
+    if (rootId === 'carpets') setUnit('sq. ft.');
     else if (['vinyl-flooring', 'carpet-tiles', 'solid-hardwood', 'tiles'].includes(rootId)) setUnit('sq. ft.');
     else if (rootId === 'area-rugs') setUnit('rug (5x8)');
     else if (rootId === 'stair-runner') setUnit('runner (2.5x10)');
@@ -410,7 +410,7 @@ export default function ProductEditor({ mode, productId, initialProduct }: Produ
       price: parseFloat(price) || 0.00,
       regular_price: regularPrice ? parseFloat(regularPrice) : null,
       sale_price: salePrice ? parseFloat(salePrice) : null,
-      unit: unit || 'sq. yd.',
+      unit: unit || 'sq. ft.',
       category_id: categoryId,
       category_label: categoryLabel,
       badge: badge.trim() || null,
