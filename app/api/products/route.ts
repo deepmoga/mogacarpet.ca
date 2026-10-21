@@ -26,6 +26,10 @@ export async function GET(req: Request) {
     const search = searchParams.get('search')?.trim() || '';
     const category = searchParams.get('category')?.trim() || '';
     const stock = searchParams.get('stock')?.trim() || '';
+    const status = searchParams.get('status')?.trim() || 'all';
+    const isAdminReq = searchParams.get('admin') === 'true';
+    const isAuth = isAdminReq ? await checkAdminAuth() : false;
+
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const limit = Math.max(1, Math.min(100, parseInt(searchParams.get('limit') || '20', 10)));
     const sortBy = searchParams.get('sortBy') || 'newest';
@@ -33,6 +37,19 @@ export async function GET(req: Request) {
 
     const whereClauses: string[] = ['1=1'];
     const params: any[] = [];
+
+    // Storefront vs Admin Visibility Filter
+    if (isAuth) {
+      if (status === 'active') {
+        whereClauses.push('(is_visible IS NULL OR is_visible = 1)');
+      } else if (status === 'off') {
+        whereClauses.push('is_visible = 0');
+      }
+      // If status === 'all', show all items (both On and Off)
+    } else {
+      // Public storefront callers only ever see active/visible products
+      whereClauses.push('(is_visible IS NULL OR is_visible = 1)');
+    }
 
     if (search) {
       whereClauses.push('(name LIKE ? OR sku LIKE ? OR category_label LIKE ?)');
@@ -45,9 +62,9 @@ export async function GET(req: Request) {
       params.push(category, `%${category}%`);
     }
 
-    if (stock === 'instock') {
+    if (stock === 'instock' || stock === 'in_stock') {
       whereClauses.push('in_stock = 1');
-    } else if (stock === 'outofstock') {
+    } else if (stock === 'outofstock' || stock === 'out_of_stock') {
       whereClauses.push('in_stock = 0');
     }
 
@@ -112,6 +129,7 @@ export async function POST(req: Request) {
     const unit = data.unit || (isCarpet || categoryId.includes('vinyl') || categoryId.includes('tile') ? 'sq. ft.' : 'sq. yd.');
     const inStock = data.in_stock ? 1 : 0;
     const isFeatured = data.is_featured ? 1 : 0;
+    const isVisible = data.is_visible !== undefined ? (data.is_visible ? 1 : 0) : 1;
     const image = data.image || '/images/slide01.jpg';
     const galleryImages = JSON.stringify(data.gallery_images || [image]);
     const colors = data.colors ? (typeof data.colors === 'string' ? data.colors : JSON.stringify(data.colors)) : null;
@@ -132,7 +150,7 @@ export async function POST(req: Request) {
     `, [
       id, id, sku, name, slug, categoryId, categoryLabel,
       price, regularPrice, salePrice, unit, 5.0, 0,
-      badge, inStock, isFeatured, 1, image, galleryImages, colors,
+      badge, inStock, isFeatured, isVisible, image, galleryImages, colors,
       description, shortDescription, specs, features
     ]);
 

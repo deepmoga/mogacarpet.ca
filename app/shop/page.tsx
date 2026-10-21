@@ -16,11 +16,13 @@ export default async function ShopPage() {
   let total = 0;
 
   try {
-    const [countRes] = await query<any[]>('SELECT COUNT(*) as total FROM products WHERE in_stock = 1 OR is_visible = 1;');
+    const [countRes] = await query<any[]>(
+      'SELECT COUNT(*) as total FROM products WHERE (is_visible IS NULL OR is_visible = 1);'
+    );
     total = countRes?.total || 0;
 
     initialProducts = await query<any[]>(
-      'SELECT id, name, slug, category_id, category_label, price, regular_price, sale_price, unit, rating, reviews_count, badge, in_stock, image, colors FROM products ORDER BY created_at DESC LIMIT 24;'
+      'SELECT id, name, slug, category_id, category_label, price, regular_price, sale_price, unit, rating, reviews_count, badge, in_stock, image, colors FROM products WHERE (is_visible IS NULL OR is_visible = 1) ORDER BY created_at DESC LIMIT 24;'
     );
   } catch (err) {
     console.error('Failed to pre-fetch shop products:', err);

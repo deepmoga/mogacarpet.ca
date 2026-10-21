@@ -125,6 +125,7 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'off'>('all');
   const [productsLoading, setProductsLoading] = useState(false);
 
   // Inquiries Data
@@ -250,6 +251,8 @@ export default function AdminPage() {
         search: searchQuery,
         category: selectedCategory,
         stock: stockFilter,
+        status: statusFilter,
+        admin: 'true',
       });
       const res = await fetch(`/api/products?${params.toString()}`);
       const data = await res.json();
@@ -263,7 +266,7 @@ export default function AdminPage() {
     } finally {
       setProductsLoading(false);
     }
-  }, [currentPage, searchQuery, selectedCategory, stockFilter]);
+  }, [currentPage, searchQuery, selectedCategory, stockFilter, statusFilter]);
 
   // Fetch Inquiries
   const fetchInquiries = useCallback(async () => {
@@ -361,11 +364,31 @@ export default function AdminPage() {
   const handleToggleStock = async (product: Product) => {
     const newStock = product.in_stock ? 0 : 1;
     await fetch(`/api/products/${product.id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...product, in_stock: newStock }),
+      body: JSON.stringify({ in_stock: newStock }),
     });
     fetchProducts();
+  };
+
+  // Toggle Visibility Status (Status: On / Off)
+  const handleToggleVisibility = async (product: Product) => {
+    const newVisibility = product.is_visible === 0 ? 1 : 0;
+    // Optimistic UI update
+    setProducts((prev) =>
+      prev.map((p) => (p.id === product.id ? { ...p, is_visible: newVisibility } : p))
+    );
+    try {
+      await fetch(`/api/products/${product.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_visible: newVisibility }),
+      });
+      fetchProducts();
+    } catch (err) {
+      console.error('Failed to toggle product status:', err);
+      fetchProducts();
+    }
   };
 
   // Delete Product
@@ -796,7 +819,7 @@ export default function AdminPage() {
               <div className="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
                   {/* Search */}
-                  <div className="sm:col-span-5 relative">
+                  <div className="sm:col-span-4 relative">
                     <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
@@ -811,7 +834,7 @@ export default function AdminPage() {
                   </div>
 
                   {/* Category Filter */}
-                  <div className="sm:col-span-4">
+                  <div className="sm:col-span-3">
                     <select
                       value={selectedCategory}
                       onChange={(e) => {
@@ -830,7 +853,7 @@ export default function AdminPage() {
                   </div>
 
                   {/* Stock Filter */}
-                  <div className="sm:col-span-3">
+                  <div className="sm:col-span-2">
                     <select
                       value={stockFilter}
                       onChange={(e) => {
@@ -842,6 +865,22 @@ export default function AdminPage() {
                       <option value="all">All Stock Status</option>
                       <option value="in_stock">In Stock Only</option>
                       <option value="out_of_stock">Out of Stock</option>
+                    </select>
+                  </div>
+
+                  {/* Status Filter (On / Off) */}
+                  <div className="sm:col-span-3">
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => {
+                        setStatusFilter(e.target.value as any);
+                        setCurrentPage(1);
+                      }}
+                      className="w-full py-2 px-3 text-xs rounded-xl bg-stone-50 border border-stone-300 text-stone-800 focus:outline-none focus:border-[#1212ff] font-medium"
+                    >
+                      <option value="all">All Status (On &amp; Off)</option>
+                      <option value="active">Status: On (Visible)</option>
+                      <option value="off">Status: Off (Hidden)</option>
                     </select>
                   </div>
                 </div>
@@ -869,6 +908,7 @@ export default function AdminPage() {
                           <th className="py-3 px-4">Category Path</th>
                           <th className="py-3 px-4">Price</th>
                           <th className="py-3 px-4 text-center">Stock</th>
+                          <th className="py-3 px-4 text-center">Status</th>
                           <th className="py-3 px-4 text-right">Actions</th>
                         </tr>
                       </thead>
@@ -910,6 +950,28 @@ export default function AdminPage() {
                                 }`}
                               >
                                 {prod.in_stock ? 'In Stock' : 'Out of Stock'}
+                              </button>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <button
+                                onClick={() => handleToggleVisibility(prod)}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold transition-all cursor-pointer shadow-xs ${
+                                  prod.is_visible !== 0
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
+                                    : 'bg-stone-100 text-stone-500 border border-stone-300 hover:bg-stone-200'
+                                }`}
+                                title={
+                                  prod.is_visible !== 0
+                                    ? 'Status is ON (Visible on front website). Click to turn OFF.'
+                                    : 'Status is OFF (Hidden from front website). Click to turn ON.'
+                                }
+                              >
+                                <span
+                                  className={`w-1.5 h-1.5 rounded-full ${
+                                    prod.is_visible !== 0 ? 'bg-emerald-500 animate-pulse' : 'bg-stone-400'
+                                  }`}
+                                />
+                                <span>{prod.is_visible !== 0 ? 'On' : 'Off'}</span>
                               </button>
                             </td>
                             <td className="py-3 px-4 text-right">

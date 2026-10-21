@@ -18,13 +18,13 @@ export default async function ProductsPage() {
     const productsRows = await query<any[]>(`
       SELECT id, name, slug, sku, category_id, category_label, price, regular_price, sale_price, unit, rating, reviews_count, badge, in_stock, image
       FROM products
-      WHERE in_stock = 1
+      WHERE in_stock = 1 AND (is_visible IS NULL OR is_visible = 1)
       ORDER BY id DESC
       LIMIT 20
     `);
 
     const countRows = await query<any[]>(`
-      SELECT COUNT(*) as total FROM products WHERE in_stock = 1
+      SELECT COUNT(*) as total FROM products WHERE in_stock = 1 AND (is_visible IS NULL OR is_visible = 1)
     `);
 
     initialProducts = productsRows.map(p => ({

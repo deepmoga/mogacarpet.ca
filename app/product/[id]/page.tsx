@@ -1,6 +1,8 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth';
 import { query } from '@/lib/db';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -10,11 +12,23 @@ interface ProductPageProps {
   params: Promise<{ id: string }>;
 }
 
+async function checkAdminAuth() {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('admin_session')?.value;
+    if (!token) return false;
+    const payload = verifyToken(token);
+    return payload?.role === 'admin';
+  } catch {
+    return false;
+  }
+}
+
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { id } = await params;
   const rows = await query<any[]>('SELECT * FROM products WHERE id = ? OR slug = ? LIMIT 1;', [id, id]);
   
-  if (!rows || rows.length === 0) {
+  if (!rows || rows.length === 0 || (rows[0].is_visible === 0 && !(await checkAdminAuth()))) {
     return {
       title: 'Product Not Found | Moga Carpet & Flooring Brampton',
     };
@@ -48,6 +62,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   const rawProd = rows[0];
+  const isAdmin = await checkAdminAuth();
+
+  // If status is OFF and visitor is not authenticated as admin, return 404 Not Found
+  if (rawProd.is_visible === 0 && !isAdmin) {
+    notFound();
+  }
 
   // Parse gallery images
   let galleryImages: string[] = [];
@@ -117,9 +137,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
     features,
   };
 
-  // Fetch 4 related products from the same category
+  // Fetch 4 related products from the same category (only active/visible products)
   const rawRelatedRows = await query<any[]>(
-    'SELECT id, name, slug, price, unit, image, badge, category_id, category_label FROM products WHERE category_id = ? AND id != ? ORDER BY id DESC LIMIT 4;',
+    'SELECT id, name, slug, price, unit, image, badge, category_id, category_label FROM products WHERE category_id = ? AND id != ? AND (is_visible IS NULL OR is_visible = 1) ORDER BY id DESC LIMIT 4;',
     [product.category_id, product.id]
   );
 
@@ -141,6 +161,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
+      {rawProd.is_visible === 0 && (
+        <div className="bg-amber-500 text-white text-xs font-bold py-2.5 px-4 text-center tracking-wide shadow-sm flex items-center justify-center gap-2">
+          <span>⚠️ ADMIN PREVIEW: This product status is currently OFF (Hidden from the storefront). Public visitors cannot access this page.</span>
+        </div>
+      )}
       <main className="flex-1">
         <ProductDetailsClient
           product={product}

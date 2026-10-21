@@ -44,13 +44,13 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   try {
     const [countRes] = await query<any[]>(
-      'SELECT COUNT(*) as total FROM products WHERE category_id = ? OR category_label LIKE ?;',
+      'SELECT COUNT(*) as total FROM products WHERE (category_id = ? OR category_label LIKE ?) AND (is_visible IS NULL OR is_visible = 1);',
       [cat.id, `%${cat.name}%`]
     );
     total = countRes?.total || 0;
 
     initialProducts = await query<any[]>(
-      'SELECT id, name, slug, category_id, category_label, price, regular_price, sale_price, unit, rating, reviews_count, badge, in_stock, image, colors FROM products WHERE category_id = ? OR category_label LIKE ? ORDER BY created_at DESC LIMIT 24;',
+      'SELECT id, name, slug, category_id, category_label, price, regular_price, sale_price, unit, rating, reviews_count, badge, in_stock, image, colors FROM products WHERE (category_id = ? OR category_label LIKE ?) AND (is_visible IS NULL OR is_visible = 1) ORDER BY created_at DESC LIMIT 24;',
       [cat.id, `%${cat.name}%`]
     );
   } catch (err) {

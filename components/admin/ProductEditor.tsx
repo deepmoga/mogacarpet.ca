@@ -1232,25 +1232,28 @@ export default function ProductEditor({ mode, productId, initialProduct }: Produ
                   <Save className="w-4 h-4 text-[#ff0000]" />
                   <span>Publish Meta</span>
                 </h4>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                  {isVisible ? 'Active' : 'Draft'}
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  isVisible ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-200 text-stone-700'
+                }`}>
+                  Status: {isVisible ? 'On' : 'Off'}
                 </span>
               </div>
 
               <div className="space-y-3 text-xs">
                 {/* Visibility Toggle */}
                 <div className="flex items-center justify-between">
-                  <span className="text-stone-600 font-semibold">Store Visibility:</span>
+                  <span className="text-stone-600 font-semibold">Storefront Status:</span>
                   <button
                     type="button"
                     onClick={() => setIsVisible(!isVisible)}
-                    className={`px-3 py-1 rounded-lg font-bold border transition-colors ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-bold border transition-colors ${
                       isVisible
-                        ? 'bg-blue-50 border-blue-200 text-[#1212ff]'
-                        : 'bg-stone-100 border-stone-200 text-stone-500'
+                        ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
+                        : 'bg-stone-100 border-stone-300 text-stone-600'
                     }`}
                   >
-                    {isVisible ? 'Public & Searchable' : 'Hidden / Draft'}
+                    <span className={`w-2 h-2 rounded-full ${isVisible ? 'bg-emerald-500' : 'bg-stone-400'}`} />
+                    <span>{isVisible ? 'Status: On (Visible)' : 'Status: Off (Hidden)'}</span>
                   </button>
                 </div>
 

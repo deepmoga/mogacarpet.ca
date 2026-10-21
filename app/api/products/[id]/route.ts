@@ -117,6 +117,52 @@ export async function PUT(
   }
 }
 
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const isAuth = await checkAdminAuth();
+  if (!isAuth) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { id } = await params;
+    const data = await req.json();
+
+    const fields: string[] = [];
+    const values: any[] = [];
+
+    if (data.is_visible !== undefined) {
+      fields.push('is_visible = ?');
+      values.push(data.is_visible ? 1 : 0);
+    }
+    if (data.in_stock !== undefined) {
+      fields.push('in_stock = ?');
+      values.push(data.in_stock ? 1 : 0);
+    }
+    if (data.is_featured !== undefined) {
+      fields.push('is_featured = ?');
+      values.push(data.is_featured ? 1 : 0);
+    }
+    if (data.price !== undefined) {
+      fields.push('price = ?');
+      values.push(parseFloat(data.price) || 0);
+    }
+
+    if (fields.length === 0) {
+      return NextResponse.json({ success: false, error: 'No fields provided' }, { status: 400 });
+    }
+
+    fields.push('updated_at = CURRENT_TIMESTAMP');
+    await query(`UPDATE products SET ${fields.join(', ')} WHERE id = ?;`, [...values, id]);
+
+    return NextResponse.json({ success: true, message: 'Product updated successfully' });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}
+
 export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
