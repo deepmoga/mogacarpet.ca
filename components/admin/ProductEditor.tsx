@@ -71,11 +71,10 @@ const COLOR_PRESETS = [
 
 const UNIT_OPTIONS = [
   'sq. ft.',
-  'sq. yd.',
+  'box (20 sq ft)',
   'rug (5x8)',
   'rug (8x10)',
   'runner (2.5x10)',
-  'box (20 sq ft)',
   'roll',
   'linear ft.',
   'piece',
@@ -229,10 +228,10 @@ export default function ProductEditor({ mode, productId, initialProduct }: Produ
     setCategoryId(rootId);
     setCategoryLabel(fullPath);
     // Auto-suggest unit
-    if (rootId === 'carpets') setUnit('sq. ft.');
-    else if (['vinyl-flooring', 'carpet-tiles', 'solid-hardwood', 'tiles'].includes(rootId)) setUnit('sq. ft.');
+    if (['carpets', 'vinyl-flooring', 'carpet-tiles', 'solid-hardwood', 'tiles', 'underpad', 'countertop'].includes(rootId)) setUnit('sq. ft.');
     else if (rootId === 'area-rugs') setUnit('rug (5x8)');
     else if (rootId === 'stair-runner') setUnit('runner (2.5x10)');
+    else setUnit('sq. ft.');
   };
 
   // Auto-slug generator on create
@@ -772,7 +771,7 @@ export default function ProductEditor({ mode, productId, initialProduct }: Produ
                           type="text"
                           value={unit}
                           onChange={(e) => setUnit(e.target.value)}
-                          placeholder="Or type custom unit (e.g. sq. yd., box, rug)"
+                          placeholder="Or type custom unit (e.g. sq. ft., box, rug)"
                           className="w-full sm:w-64 px-3 py-2 text-xs border border-stone-300 rounded-lg focus:outline-none focus:border-[#1212ff]"
                         />
                       </div>

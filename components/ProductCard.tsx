@@ -29,16 +29,11 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, onInquire }: ProductCardProps) {
   const categoryText = product.category_label || product.categoryName || product.category_id || 'Flooring Collection';
-  const isCarpetCategory =
-    product.category_id === 'carpets' ||
-    product.category_id === 'carpet-tiles' ||
-    categoryText.toLowerCase().includes('carpet');
-
   let rawUnit = product.unit;
-  if (isCarpetCategory && (!rawUnit || rawUnit.toLowerCase().includes('yd'))) {
+  if (!rawUnit || rawUnit.toLowerCase().includes('yd')) {
     rawUnit = 'sq. ft.';
   }
-  const unitText = rawUnit ? (rawUnit.startsWith('/') ? rawUnit : `/ ${rawUnit}`) : (isCarpetCategory ? '/ sq. ft.' : '/ sq. yd.');
+  const unitText = rawUnit.startsWith('/') ? rawUnit : `/ ${rawUnit}`;
   const isInStock = product.in_stock !== false && product.in_stock !== 0;
 
   return (

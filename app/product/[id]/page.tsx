@@ -101,16 +101,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
     features = [];
   }
 
-  const isCarpetCategory =
-    rawProd.category_id === 'carpets' ||
-    rawProd.category_id === 'carpet-tiles' ||
-    (rawProd.category_label && rawProd.category_label.toLowerCase().includes('carpet'));
-
   let displayUnit = rawProd.unit;
-  if (isCarpetCategory && (!displayUnit || displayUnit.toLowerCase().includes('yd'))) {
+  if (!displayUnit || displayUnit.toLowerCase().includes('yd')) {
     displayUnit = 'sq. ft.';
-  } else if (!displayUnit) {
-    displayUnit = isCarpetCategory ? 'sq. ft.' : 'sq. yd.';
   }
 
   const product = {
@@ -144,17 +137,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
   );
 
   const relatedProducts = (rawRelatedRows || []).map((rel) => {
-    const isRelCarpet =
-      rel.category_id === 'carpets' ||
-      rel.category_id === 'carpet-tiles' ||
-      (rel.category_label && rel.category_label.toLowerCase().includes('carpet'));
     let relUnit = rel.unit;
-    if (isRelCarpet && (!relUnit || relUnit.toLowerCase().includes('yd'))) {
+    if (!relUnit || relUnit.toLowerCase().includes('yd')) {
       relUnit = 'sq. ft.';
     }
     return {
       ...rel,
-      unit: relUnit || (isRelCarpet ? 'sq. ft.' : 'sq. yd.'),
+      unit: relUnit,
     };
   });
 

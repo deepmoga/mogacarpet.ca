@@ -25,32 +25,25 @@ async function main() {
     port: Number(process.env.DB_PORT) || 3306,
   });
 
-  console.log('Connected to MySQL. Updating carpet product units...');
+  console.log('Connected to MySQL. Updating all products with sq. yd. to sq. ft....');
 
   const [result] = await conn.query(`
     UPDATE products 
     SET unit = 'sq. ft.' 
-    WHERE (category_id = 'carpets' OR category_id = 'carpet-tiles' OR category_label LIKE '%carpet%' OR category_id LIKE '%carpet%') 
-      AND (unit IN ('sq. yd.', 'sq.yd.', 'sq yd') OR unit IS NULL OR unit = '');
+    WHERE unit IN ('sq. yd.', 'sq.yd.', 'sq yd') 
+       OR unit LIKE '%yd%' 
+       OR unit IS NULL 
+       OR unit = '';
   `);
 
-  console.log(`Successfully updated ${result.affectedRows} carpet products to 'sq. ft.'`);
+  console.log(`Successfully updated ${result.affectedRows} products to 'sq. ft.'`);
 
-  const [carpetSummary] = await conn.query(`
-    SELECT category_id, unit, count(*) as count 
+  const [unitSummary] = await conn.query(`
+    SELECT unit, count(*) as count 
     FROM products 
-    WHERE category_id IN ('carpets', 'carpet-tiles') 
-    GROUP BY category_id, unit;
+    GROUP BY unit;
   `);
-  console.log('Carpet categories current units:', carpetSummary);
-
-  const [otherSummary] = await conn.query(`
-    SELECT category_id, unit, count(*) as count 
-    FROM products 
-    WHERE category_id NOT IN ('carpets', 'carpet-tiles') 
-    GROUP BY category_id, unit;
-  `);
-  console.log('Other categories (untouched):', otherSummary);
+  console.log('Current database units breakdown:', unitSummary);
 
   await conn.end();
 }

@@ -334,7 +334,7 @@ export const ALL_IMPORTED_PRODUCTS: Product[] = (allProductsRaw as any[]).map((p
     }),
     rating: 4.8,
     reviewsCount: 12,
-    unit: isCarpet || p.name.toLowerCase().includes('tile') || p.name.toLowerCase().includes('vinyl') ? 'sq. ft.' : 'sq. yd.',
+    unit: 'sq. ft.',
     description: p.description || p.shortDescription || '',
     features: ['Direct Mill Certified', 'Professional Installation Available', 'In-Stock Brampton Warehouse'],
     specs: {

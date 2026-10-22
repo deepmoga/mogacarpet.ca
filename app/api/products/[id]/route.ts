@@ -65,8 +65,10 @@ export async function PUT(
     const isVisible = data.is_visible !== undefined ? (data.is_visible ? 1 : 0) : 1;
     const categoryId = data.category_id || 'carpets';
     const categoryLabel = data.category_label || 'Carpets & Broadloom';
-    const isCarpet = categoryId.includes('carpet');
-    const unit = data.unit || (isCarpet ? 'sq. ft.' : 'sq. yd.');
+    let unit = data.unit || 'sq. ft.';
+    if (unit.toLowerCase().includes('yd')) {
+      unit = 'sq. ft.';
+    }
     const image = data.image || null;
     const galleryImages = data.gallery_images !== undefined ? (typeof data.gallery_images === 'string' ? data.gallery_images : JSON.stringify(data.gallery_images)) : null;
     const colors = data.colors !== undefined ? (typeof data.colors === 'string' ? data.colors : JSON.stringify(data.colors)) : null;
