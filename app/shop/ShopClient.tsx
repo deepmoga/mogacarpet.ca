@@ -48,6 +48,19 @@ export default function ShopClient({ initialProducts, initialPagination, initial
   const sentinelRef = React.useRef<HTMLDivElement>(null);
   const isInitialMount = React.useRef(true);
 
+  // Sync state when URL searchParams changes (e.g. navigation via Navbar)
+  useEffect(() => {
+    const urlSearch = searchParams?.get('search') || '';
+    const urlCategory = searchParams?.get('category') || initialCategory || 'all';
+    const urlStock = searchParams?.get('stock') || 'all';
+    const urlSort = searchParams?.get('sortBy') || 'newest';
+
+    setSearch(urlSearch);
+    setSelectedCategory(urlCategory);
+    setStockFilter(urlStock);
+    setSortBy(urlSort);
+  }, [searchParams, initialCategory]);
+
   // Fetch initial/filtered products when search, category, or sort changes
   const fetchFilteredProducts = useCallback(async () => {
     setLoading(true);
@@ -91,6 +104,23 @@ export default function ShopClient({ initialProducts, initialPagination, initial
     }, 250);
     return () => clearTimeout(timer);
   }, [fetchFilteredProducts]);
+
+  // Keep URL in sync with client-side filter changes without full navigation
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams();
+    if (search.trim()) params.set('search', search.trim());
+    if (selectedCategory && selectedCategory !== 'all') params.set('category', selectedCategory);
+    if (stockFilter && stockFilter !== 'all') params.set('stock', stockFilter);
+    if (sortBy && sortBy !== 'newest') params.set('sortBy', sortBy);
+
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    const currentPath = window.location.pathname;
+    const currentSearch = window.location.search;
+    if (`${currentPath}${currentSearch}` !== `${currentPath}${queryString}`) {
+      window.history.replaceState(null, '', `${currentPath}${queryString}`);
+    }
+  }, [search, selectedCategory, stockFilter, sortBy]);
 
   // Load next 24 products on scroll
   const loadMore = useCallback(async () => {

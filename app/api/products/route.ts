@@ -52,9 +52,9 @@ export async function GET(req: Request) {
     }
 
     if (search) {
-      whereClauses.push('(name LIKE ? OR sku LIKE ? OR category_label LIKE ?)');
+      whereClauses.push('(name LIKE ? OR sku LIKE ? OR category_label LIKE ? OR short_description LIKE ?)');
       const wild = `%${search}%`;
-      params.push(wild, wild, wild);
+      params.push(wild, wild, wild, wild);
     }
 
     if (category && category !== 'all') {
