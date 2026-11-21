@@ -24,6 +24,7 @@ import {
   X,
   AlertCircle,
   Eye,
+  EyeOff,
   DollarSign,
   Phone,
   MapPin,
@@ -116,7 +117,24 @@ export default function AdminPage() {
   const loginCaptchaRef = useRef<GoogleReCaptchaHandle>(null);
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'inquiries' | 'quotes' | 'categories' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'banners' | 'products' | 'inquiries' | 'quotes' | 'categories' | 'settings'>('dashboard');
+
+  // Homepage Banners Data
+  const [banners, setBanners] = useState<any[]>([]);
+  const [bannersLoading, setBannersLoading] = useState(false);
+  const [bannerModalOpen, setBannerModalOpen] = useState(false);
+  const [editingBanner, setEditingBanner] = useState<any | null>(null);
+  const [bannerForm, setBannerForm] = useState({
+    title: '',
+    image_url: '',
+    link_url: '',
+    alt_text: '',
+    display_order: 1,
+    is_active: true,
+  });
+  const [uploadingBannerFile, setUploadingBannerFile] = useState(false);
+  const [bannerActionLoading, setBannerActionLoading] = useState(false);
+  const [bannerFeedback, setBannerFeedback] = useState<string | null>(null);
 
   // Products Data
   const [products, setProducts] = useState<Product[]>([]);
@@ -240,7 +258,7 @@ export default function AdminPage() {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       const tab = urlParams.get('tab');
-      if (tab && ['dashboard', 'products', 'inquiries', 'quotes', 'categories', 'settings'].includes(tab)) {
+      if (tab && ['dashboard', 'banners', 'products', 'inquiries', 'quotes', 'categories', 'settings'].includes(tab)) {
         setActiveTab(tab as any);
       }
     }
@@ -289,13 +307,30 @@ export default function AdminPage() {
     }
   }, []);
 
-  // Fetch Secondary Data (Quotes, Categories, Settings)
+  // Fetch Banners
+  const fetchBanners = useCallback(async () => {
+    setBannersLoading(true);
+    try {
+      const res = await fetch('/api/admin/banners');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.banners)) {
+        setBanners(data.banners);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setBannersLoading(false);
+    }
+  }, []);
+
+  // Fetch Secondary Data (Quotes, Categories, Settings, Banners)
   const fetchSecondaryData = useCallback(async () => {
     try {
-      const [quotesRes, catsRes, settingsRes] = await Promise.all([
+      const [quotesRes, catsRes, settingsRes, bannersRes] = await Promise.all([
         fetch('/api/quotes'),
         fetch('/api/categories'),
         fetch('/api/admin/settings'),
+        fetch('/api/admin/banners'),
       ]);
       const quotesData = await quotesRes.json();
       if (quotesData.success) setQuotes(quotesData.quotes || []);
@@ -307,10 +342,150 @@ export default function AdminPage() {
       if (settingsData.success) {
         setSettings((prev: any) => ({ ...prev, ...settingsData.settings }));
       }
+
+      const bannersData = await bannersRes.json();
+      if (bannersData.success && Array.isArray(bannersData.banners)) {
+        setBanners(bannersData.banners);
+      }
     } catch (err) {
       console.error(err);
     }
   }, []);
+
+  const handleOpenNewBannerModal = () => {
+    setEditingBanner(null);
+    setBannerForm({
+      title: '',
+      image_url: '',
+      link_url: '',
+      alt_text: '',
+      display_order: banners.length + 1,
+      is_active: true,
+    });
+    setBannerModalOpen(true);
+  };
+
+  const handleOpenEditBannerModal = (banner: any) => {
+    setEditingBanner(banner);
+    setBannerForm({
+      title: banner.title || '',
+      image_url: banner.image_url || '',
+      link_url: banner.link_url || '',
+      alt_text: banner.alt_text || '',
+      display_order: banner.display_order ?? 1,
+      is_active: Boolean(banner.is_active),
+    });
+    setBannerModalOpen(true);
+  };
+
+  const handleUploadBannerFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 15 * 1024 * 1024) {
+      alert('File size exceeds 15MB limit.');
+      return;
+    }
+
+    setUploadingBannerFile(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setBannerForm((prev) => ({ ...prev, image_url: data.url }));
+      } else {
+        alert(data.error || 'Failed to upload image.');
+      }
+    } catch (err: any) {
+      alert('Upload failed: ' + (err.message || 'Unknown network error'));
+    } finally {
+      setUploadingBannerFile(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleSaveBanner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bannerForm.image_url) {
+      alert('Banner image URL is required.');
+      return;
+    }
+
+    setBannerActionLoading(true);
+    try {
+      const endpoint = '/api/admin/banners';
+      const method = editingBanner ? 'PUT' : 'POST';
+      const payload = editingBanner
+        ? { id: editingBanner.id, ...bannerForm }
+        : bannerForm;
+
+      const res = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBannerModalOpen(false);
+        setBannerFeedback(editingBanner ? 'Banner updated successfully!' : 'New banner added successfully!');
+        setTimeout(() => setBannerFeedback(null), 4000);
+        await fetchBanners();
+      } else {
+        alert(data.error || 'Failed to save banner.');
+      }
+    } catch (err: any) {
+      alert('Error saving banner: ' + (err.message || 'Unknown error'));
+    } finally {
+      setBannerActionLoading(false);
+    }
+  };
+
+  const handleToggleBannerStatus = async (banner: any) => {
+    const newStatus = !banner.is_active;
+    setBanners((prev) =>
+      prev.map((b) => (b.id === banner.id ? { ...b, is_active: newStatus ? 1 : 0 } : b))
+    );
+
+    try {
+      const res = await fetch('/api/admin/banners', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: banner.id, is_active: newStatus ? 1 : 0 }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        await fetchBanners();
+        alert(data.error || 'Failed to update banner status.');
+      }
+    } catch {
+      await fetchBanners();
+    }
+  };
+
+  const handleDeleteBanner = async (id: number) => {
+    if (!confirm('Are you sure you want to permanently delete this banner?')) return;
+
+    try {
+      const res = await fetch(`/api/admin/banners?id=${id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBannerFeedback('Banner deleted successfully!');
+        setTimeout(() => setBannerFeedback(null), 4000);
+        await fetchBanners();
+      } else {
+        alert(data.error || 'Failed to delete banner.');
+      }
+    } catch (err: any) {
+      alert('Error deleting banner: ' + (err.message || 'Unknown error'));
+    }
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -639,6 +814,7 @@ export default function AdminPage() {
         <aside className="w-full md:w-64 bg-white border-r border-stone-200 p-4 space-y-1 shadow-sm">
           {[
             { id: 'dashboard', label: 'Dashboard Overview', icon: LayoutDashboard },
+            { id: 'banners', label: `Homepage Banners (${banners.length})`, icon: ImageIcon },
             { id: 'products', label: `Products (${totalProducts})`, icon: Package },
             { id: 'inquiries', label: `Product Inquiries (${inquiries.length})`, icon: MessageSquare, badge: inquiries.filter(i => i.status === 'New').length },
             { id: 'quotes', label: `Estimates & Leads (${quotes.length})`, icon: FileText },
@@ -793,6 +969,232 @@ export default function AdminPage() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* TAB: HOMEPAGE BANNERS MANAGEMENT */}
+          {/* ========================================================= */}
+          {activeTab === 'banners' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-black text-stone-900 tracking-tight flex items-center gap-2">
+                    <ImageIcon className="w-6 h-6 text-[#1212ff]" />
+                    <span>Homepage Banners Management</span>
+                  </h2>
+                  <p className="text-xs text-stone-500 mt-1">
+                    Upload multiple top hero banners, configure click destination redirect links, and manage display sequence
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={fetchBanners}
+                    disabled={bannersLoading}
+                    className="p-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-600 hover:text-stone-900 transition-all shadow-sm cursor-pointer"
+                    title="Refresh Banners"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${bannersLoading ? 'animate-spin' : ''}`} />
+                  </button>
+                  <button
+                    onClick={handleOpenNewBannerModal}
+                    className="px-4 py-2.5 rounded-xl bg-[#1212ff] hover:bg-[#0a0ad8] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-md transition-all cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add New Banner</span>
+                  </button>
+                </div>
+              </div>
+
+              {bannerFeedback && (
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-sm animate-fadeIn">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span>{bannerFeedback}</span>
+                </div>
+              )}
+
+              {/* Banners Grid / List */}
+              <div className="bg-white rounded-3xl p-6 border border-stone-200 shadow-sm space-y-6">
+                <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-stone-700 uppercase tracking-wider">
+                      All Uploaded Banners ({banners.length})
+                    </span>
+                    <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
+                      {banners.filter(b => b.is_active).length} Active Live
+                    </span>
+                    {banners.filter(b => !b.is_active).length > 0 && (
+                      <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200 font-semibold">
+                        {banners.filter(b => !b.is_active).length} Hidden
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-stone-400">
+                    Banners auto-rotate on the homepage when multiple are active
+                  </span>
+                </div>
+
+                {bannersLoading && banners.length === 0 ? (
+                  <div className="py-16 text-center text-stone-400 text-xs">
+                    <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#1212ff]" />
+                    <span>Loading homepage banners...</span>
+                  </div>
+                ) : banners.length === 0 ? (
+                  <div className="py-16 text-center text-stone-400 space-y-3">
+                    <ImageIcon className="w-12 h-12 mx-auto text-stone-300" />
+                    <p className="text-sm font-semibold text-stone-700">No banners uploaded yet</p>
+                    <p className="text-xs text-stone-400 max-w-sm mx-auto">
+                      Click &quot;Add New Banner&quot; above to upload your first promotional image banner and set its click link.
+                    </p>
+                    <button
+                      onClick={handleOpenNewBannerModal}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1212ff] text-white text-xs font-bold shadow-md cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Upload Banner</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {banners.map((banner, idx) => {
+                      const isActive = Boolean(banner.is_active);
+                      return (
+                        <div
+                          key={banner.id || idx}
+                          className={`rounded-2xl border transition-all duration-200 overflow-hidden shadow-sm flex flex-col justify-between ${
+                            isActive
+                              ? 'border-stone-200 bg-white hover:border-blue-300 hover:shadow-md'
+                              : 'border-stone-200/60 bg-stone-50/70 opacity-80'
+                          }`}
+                        >
+                          <div>
+                            {/* Banner Image Preview with Overlaid Status Badges */}
+                            <div className="relative w-full h-44 sm:h-52 bg-stone-900 overflow-hidden flex items-center justify-center group/img">
+                              <img
+                                src={banner.image_url}
+                                alt={banner.alt_text || banner.title || 'Banner'}
+                                className="w-full h-full object-cover group-hover/img:scale-102 transition-transform duration-500"
+                              />
+
+                              {/* Badges */}
+                              <div className="absolute top-3 left-3 flex items-center gap-2">
+                                <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-lg bg-black/70 text-white backdrop-blur-sm border border-white/20">
+                                  #{banner.display_order ?? idx + 1}
+                                </span>
+                                {isActive ? (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-500/90 text-white backdrop-blur-sm shadow-sm flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                                    Live on Homepage
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-stone-700/90 text-stone-200 backdrop-blur-sm">
+                                    Draft / Hidden
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Quick click preview if link exists */}
+                              {banner.link_url && (
+                                <a
+                                  href={banner.link_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="absolute bottom-3 right-3 opacity-0 group-hover/img:opacity-100 transition-opacity px-2.5 py-1 rounded-lg bg-black/80 hover:bg-[#1212ff] text-white text-[10px] font-bold flex items-center gap-1 backdrop-blur-md"
+                                  title="Test click redirect in new tab"
+                                >
+                                  <span>Test Link</span>
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              )}
+                            </div>
+
+                            {/* Banner Info */}
+                            <div className="p-4 space-y-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div>
+                                  <h3 className="text-sm font-bold text-stone-900 truncate">
+                                    {banner.title || `Homepage Banner #${banner.id}`}
+                                  </h3>
+                                  <p className="text-[11px] text-stone-500 truncate mt-0.5">
+                                    Alt: {banner.alt_text || 'No alt text set'}
+                                  </p>
+                                </div>
+                                <span className="text-[10px] text-stone-400 font-mono flex-shrink-0">
+                                  ID: {banner.id}
+                                </span>
+                              </div>
+
+                              {/* Click Destination URL */}
+                              <div className="bg-stone-50 p-2.5 rounded-xl border border-stone-200/80 flex items-center justify-between text-xs">
+                                <div className="truncate mr-2">
+                                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">
+                                    Click Redirect URL:
+                                  </span>
+                                  {banner.link_url ? (
+                                    <span className="font-mono text-stone-800 text-xs font-semibold truncate block">
+                                      {banner.link_url}
+                                    </span>
+                                  ) : (
+                                    <span className="text-stone-400 italic text-xs">
+                                      No link set (static banner)
+                                    </span>
+                                  )}
+                                </div>
+                                {banner.link_url && (
+                                  <a
+                                    href={banner.link_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-1.5 rounded-lg text-stone-500 hover:text-[#1212ff] hover:bg-stone-200/60 transition-all flex-shrink-0"
+                                    title="Open link in new tab"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="p-4 pt-0 border-t border-stone-100 flex items-center justify-between mt-2">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleBannerStatus(banner)}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                isActive
+                                  ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
+                                  : 'bg-stone-100 hover:bg-stone-200 text-stone-600 border border-stone-200'
+                              }`}
+                            >
+                              {isActive ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                              <span>{isActive ? 'Active (Live)' : 'Hidden (Draft)'}</span>
+                            </button>
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditBannerModal(banner)}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition-all cursor-pointer"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                                <span>Edit</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteBanner(banner.id)}
+                                className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-[#ff0000] transition-all cursor-pointer"
+                                title="Delete Banner"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -2110,6 +2512,196 @@ export default function AdminPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* BANNER ADD / EDIT MODAL */}
+          {/* ========================================================= */}
+          {bannerModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+              <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[92vh] overflow-y-auto border border-stone-200 shadow-2xl p-6 sm:p-8 space-y-6">
+                <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                      <ImageIcon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-stone-900">
+                        {editingBanner ? `Edit Banner #${editingBanner.id}` : 'Add New Homepage Banner'}
+                      </h3>
+                      <p className="text-xs text-stone-500">
+                        Upload image, set click destination redirect link, and display sequence
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setBannerModalOpen(false)}
+                    className="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-all cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveBanner} className="space-y-5">
+                  {/* Image Preview & Upload */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-stone-700">
+                      Banner Image *
+                    </label>
+                    <div className="relative w-full rounded-2xl border-2 border-stone-200 bg-stone-100 overflow-hidden flex items-center justify-center min-h-[160px] max-h-[260px] shadow-inner">
+                      {bannerForm.image_url ? (
+                        <img
+                          src={bannerForm.image_url}
+                          alt={bannerForm.alt_text || 'Banner Preview'}
+                          className="w-full h-full object-cover max-h-[260px]"
+                        />
+                      ) : (
+                        <div className="py-10 text-center text-stone-400 space-y-2">
+                          <ImageIcon className="w-10 h-10 mx-auto text-stone-300" />
+                          <p className="text-xs font-medium">No banner image uploaded yet</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 pt-1">
+                      <label className="cursor-pointer inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shadow-sm">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{uploadingBannerFile ? 'Uploading...' : 'Upload Image from Computer'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={uploadingBannerFile}
+                          onChange={handleUploadBannerFile}
+                          className="hidden"
+                        />
+                      </label>
+                      <span className="text-[11px] text-stone-400">
+                        Recommended: 1920×600 or 1600×550 JPG, PNG, or WebP (Max 15MB)
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Image URL text input */}
+                  <div>
+                    <label className="block text-xs font-bold text-stone-700 mb-1">
+                      Image URL / File Path *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="/images/slide01.jpg or https://..."
+                      value={bannerForm.image_url}
+                      onChange={(e) => setBannerForm({ ...bannerForm, image_url: e.target.value })}
+                      className="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#1212ff]"
+                    />
+                  </div>
+
+                  {/* Destination URL */}
+                  <div>
+                    <label className="block text-xs font-bold text-stone-700 mb-1">
+                      Click Redirect Destination URL
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="/shop, /category/carpets, /product/11942, or https://..."
+                      value={bannerForm.link_url}
+                      onChange={(e) => setBannerForm({ ...bannerForm, link_url: e.target.value })}
+                      className="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#1212ff]"
+                    />
+                    <span className="text-[10px] text-stone-400 mt-1 block">
+                      When visitors click this banner on the homepage, they will be redirected to this URL.
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Campaign Title */}
+                    <div>
+                      <label className="block text-xs font-bold text-stone-700 mb-1">
+                        Banner Title / Campaign Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Grand Fall Flooring Event"
+                        value={bannerForm.title}
+                        onChange={(e) => setBannerForm({ ...bannerForm, title: e.target.value })}
+                        className="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#1212ff]"
+                      />
+                    </div>
+
+                    {/* Alt text */}
+                    <div>
+                      <label className="block text-xs font-bold text-stone-700 mb-1">
+                        Image Alt Text (SEO & Accessibility)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Luxury Carpets Special Discount"
+                        value={bannerForm.alt_text}
+                        onChange={(e) => setBannerForm({ ...bannerForm, alt_text: e.target.value })}
+                        className="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#1212ff]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center pt-2">
+                    {/* Display Order */}
+                    <div>
+                      <label className="block text-xs font-bold text-stone-700 mb-1">
+                        Display Sequence Order
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="999"
+                        value={bannerForm.display_order}
+                        onChange={(e) => setBannerForm({ ...bannerForm, display_order: Number(e.target.value) || 1 })}
+                        className="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#1212ff]"
+                      />
+                      <span className="text-[10px] text-stone-400 mt-1 block">
+                        Lower numbers appear first on the homepage (1, 2, 3...)
+                      </span>
+                    </div>
+
+                    {/* Active Toggle */}
+                    <div>
+                      <label className="block text-xs font-bold text-stone-700 mb-1">
+                        Status Visibility
+                      </label>
+                      <label className="inline-flex items-center gap-3 cursor-pointer p-2 rounded-xl bg-stone-50 border border-stone-200 w-full">
+                        <input
+                          type="checkbox"
+                          checked={bannerForm.is_active}
+                          onChange={(e) => setBannerForm({ ...bannerForm, is_active: e.target.checked })}
+                          className="w-4 h-4 rounded text-[#1212ff] focus:ring-[#1212ff]"
+                        />
+                        <span className="text-xs font-bold text-stone-800">
+                          {bannerForm.is_active ? 'Active (Live on Homepage)' : 'Inactive (Hidden / Draft)'}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Submit Buttons */}
+                  <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-100">
+                    <button
+                      type="button"
+                      onClick={() => setBannerModalOpen(false)}
+                      className="px-4 py-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-bold transition-all cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={bannerActionLoading || !bannerForm.image_url}
+                      className="px-6 py-2.5 rounded-xl bg-[#1212ff] hover:bg-[#0a0ad8] disabled:opacity-40 text-white text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer"
+                    >
+                      {bannerActionLoading ? 'Saving...' : editingBanner ? 'Update Banner' : 'Create Banner'}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           )}
 

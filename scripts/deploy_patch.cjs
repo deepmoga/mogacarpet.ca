@@ -55,13 +55,12 @@ conn.on('ready', async () => {
       cd /home/mogacarpet/app
       tar -xzf patch.tar.gz
       rm -f patch.tar.gz
-      node scripts/update_carpet_units.cjs
+      DB_USER=mogacarpet DB_PASSWORD=9MlpYifiWYottlW node scripts/init_banners_table.cjs
       npm run build
       pm2 restart mogacarpet
-      mysql -u mogacarpet -p9MlpYifiWYottlW mogacarpet -e "UPDATE settings SET value_text = '' WHERE key_name = 'announcement_text';" || true
       sleep 3
-      echo "=== TESTING API SETTINGS ==="
-      curl -s http://127.0.0.1:3050/api/settings
+      echo "=== TESTING API BANNERS ==="
+      curl -s http://127.0.0.1:3050/api/banners
       echo ""
       echo "=== TESTING PUBLIC HOMEPAGE ==="
       curl -I -s http://127.0.0.1:3050/ | head -n 5
