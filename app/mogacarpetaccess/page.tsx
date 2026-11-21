@@ -45,7 +45,8 @@ import {
   Ruler,
   Upload,
   Globe,
-  Palette
+  Palette,
+  ImageIcon
 } from 'lucide-react';
 import { CATEGORIES, getFlattenedCategories } from '@/data/categories';
 
@@ -158,6 +159,9 @@ export default function AdminPage() {
     header_logo_url: '/images/moga-carpet-logo.png',
     footer_logo_url: '/images/moga-carpet-logo.png',
     favicon_url: '/images/favicon.png',
+    home_banner_image_url: '/images/slide01.jpg',
+    home_banner_link_url: '/shop',
+    home_banner_alt: 'Moga Carpet & Flooring Special Offers',
     contact_phone: '1-905-848-2222',
     contact_address: '1-8550 Torbram Road, Brampton, ON, Canada (Second Floor)',
     business_hours: 'Monday to Saturday 11:00 AM – 5:00 PM (Preferred By Appointment)',
@@ -187,17 +191,18 @@ export default function AdminPage() {
   const [uploadingHeaderLogo, setUploadingHeaderLogo] = useState(false);
   const [uploadingFooterLogo, setUploadingFooterLogo] = useState(false);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
+  const [uploadingHomeBanner, setUploadingHomeBanner] = useState(false);
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    field: 'header_logo_url' | 'footer_logo_url' | 'favicon_url',
+    field: 'header_logo_url' | 'footer_logo_url' | 'favicon_url' | 'home_banner_image_url',
     setLoading: (val: boolean) => void
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('File size exceeds 5MB limit.');
+    if (file.size > 15 * 1024 * 1024) {
+      alert('File size exceeds 15MB limit.');
       return;
     }
 
@@ -1606,6 +1611,120 @@ export default function AdminPage() {
                         </span>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* 2. HOMEPAGE TOP IMAGE BANNER */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm space-y-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-stone-100 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                        <ImageIcon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-stone-900">Homepage Top Image Banner</h3>
+                        <p className="text-xs text-stone-500">Manage the hero banner image and click destination link on the homepage</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold">
+                        Hero Banner
+                      </span>
+                      <label className="cursor-pointer inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shadow-sm">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{uploadingHomeBanner ? 'Uploading...' : 'Upload Banner Image'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={uploadingHomeBanner}
+                          onChange={(e) => handleFileUpload(e, 'home_banner_image_url', setUploadingHomeBanner)}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Banner Preview Box */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-stone-700 uppercase tracking-wider text-[11px]">Live Homepage Banner Preview</span>
+                      {settings.home_banner_link_url ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
+                          <ExternalLink className="w-3 h-3 text-emerald-600" />
+                          Redirects to: <strong className="font-mono text-emerald-800">{settings.home_banner_link_url}</strong>
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-stone-400 font-medium">Static banner (no redirect link set)</span>
+                      )}
+                    </div>
+
+                    <div className="relative w-full rounded-2xl border-2 border-stone-200 bg-stone-100 overflow-hidden flex items-center justify-center min-h-[140px] max-h-[260px] shadow-inner">
+                      {settings.home_banner_image_url ? (
+                        <img
+                          src={settings.home_banner_image_url}
+                          alt={settings.home_banner_alt || 'Homepage Banner Preview'}
+                          className="w-full h-full object-cover max-h-[260px]"
+                        />
+                      ) : (
+                        <div className="py-10 text-center text-stone-400">
+                          <ImageIcon className="w-10 h-10 mx-auto mb-2 text-stone-300" />
+                          <p className="text-xs font-medium">No banner image configured</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Banner Image URL */}
+                    <div>
+                      <label className="block text-xs font-bold text-stone-700 mb-1">
+                        Banner Image URL / File Path
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.home_banner_image_url || ''}
+                        onChange={(e) => setSettings({ ...settings, home_banner_image_url: e.target.value })}
+                        placeholder="/images/slide01.jpg or https://..."
+                        className="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#1212ff]"
+                      />
+                      <span className="text-[10px] text-stone-400 mt-1 block">
+                        Upload using the button above or paste an image path / URL directly.
+                      </span>
+                    </div>
+
+                    {/* Banner Link Destination */}
+                    <div>
+                      <label className="block text-xs font-bold text-stone-700 mb-1">
+                        Banner Click Destination URL (Redirect)
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.home_banner_link_url || ''}
+                        onChange={(e) => setSettings({ ...settings, home_banner_link_url: e.target.value })}
+                        placeholder="/shop, /category/carpets, or https://..."
+                        className="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#1212ff]"
+                      />
+                      <span className="text-[10px] text-stone-400 mt-1 block">
+                        When users click the homepage banner, they are redirected to this URL. Leave blank if not clickable.
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Banner Alt Text */}
+                  <div>
+                    <label className="block text-xs font-bold text-stone-700 mb-1">
+                      Banner Image Alt Text (SEO & Accessibility)
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.home_banner_alt || ''}
+                      onChange={(e) => setSettings({ ...settings, home_banner_alt: e.target.value })}
+                      placeholder="e.g. Moga Carpet & Flooring Special Offers"
+                      className="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#1212ff]"
+                    />
+                    <span className="text-[10px] text-stone-400 mt-1 block">
+                      Search engine optimization descriptive text.
+                    </span>
                   </div>
                 </div>
 

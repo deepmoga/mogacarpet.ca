@@ -7,6 +7,9 @@ export interface SiteSettings {
   header_logo_url: string;
   footer_logo_url: string;
   favicon_url: string;
+  home_banner_image_url?: string;
+  home_banner_link_url?: string;
+  home_banner_alt?: string;
   contact_email: string;
   contact_phone: string;
   contact_address: string;
@@ -36,6 +39,9 @@ const DEFAULT_SETTINGS: SiteSettings = {
   header_logo_url: '/images/cropped-web-logo-moga-carpet-flooring-5.png',
   footer_logo_url: '/images/cropped-web-logo-moga-carpet-flooring-5.png',
   favicon_url: '/favicon.ico',
+  home_banner_image_url: '/images/slide01.jpg',
+  home_banner_link_url: '/shop',
+  home_banner_alt: 'Moga Carpet & Flooring Special Offers',
   contact_email: 'info@mogacarpet.ca',
   contact_phone: '1-905-848-2222',
   contact_address: '1-8550 Torbram Road, Brampton, ON, Canada (Second Floor)',
@@ -94,6 +100,9 @@ export async function getAllSettings(): Promise<SiteSettings> {
     }
     if (!merged.favicon_url) {
       merged.favicon_url = DEFAULT_SETTINGS.favicon_url;
+    }
+    if (!merged.home_banner_image_url) {
+      merged.home_banner_image_url = DEFAULT_SETTINGS.home_banner_image_url;
     }
     return merged;
   } catch (err) {
